@@ -3,7 +3,8 @@ import os
 import json
 import hashlib
 
-class Embedding:   
+class Embedding:  
+    # 생성자
     def __init__(self):
         self.embedding_model = OpenAIEmbeddings()
         self.HASH_REGISTRY_PATH = "json/hash_registry.json"
