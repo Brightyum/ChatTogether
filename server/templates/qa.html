@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ETA | Q&A 시스템</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/qa.css') }}">
+</head>
+<body>
+  <div class="sidebar-toggle-wrapper">
+    <button class="toggle-button" id="toggleSidebar" title="사이드바 닫기">☰</button>
+  </div>
+
+  <div class="container">
+    <!-- 사이드바 -->
+    <aside class="sidebar" id="sidebar">
+      <h2>팀 목록</h2>
+      <ul>
+        <li>팀 A</li>
+        <li>팀 B</li>
+        <li>팀 C</li>
+      </ul>
+      <h2>저장된 프롬프트</h2>
+      <ul>
+        <li>자주 묻는 질문</li>
+        <li>보고서 템플릿</li>
+        <li>코드 리뷰 지침</li>
+      </ul>
+      <h2>팀 질문 목록</h2>
+      <ul>
+        <li>DB 구조 질문</li>
+        <li>API 설계 기준</li>
+        <li>배포 방식</li>
+      </ul>
+    </aside>
+
+    <!-- 메인 영역 -->
+    <main class="main" id="main">
+      <div class="user-icon">U</div>
+
+      <section class="answer-box">
+        <h3>답변 창</h3>
+        <p id="answer">여기에 답변이 출력됩니다.</p>
+      </section>
+
+      <form class="input-box" onsubmit="handleSubmit(event)">
+        <input type="text" placeholder="질문을 입력하세요..." id="question-input" required />
+        <button type="submit">➤</button>
+      </form>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='js/qa.js') }}"></script>  
+</body>
+</html>
