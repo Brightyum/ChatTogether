@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
@@ -5,6 +6,8 @@
 .vscode
 
 ### Python ###
+=======
+>>>>>>> 68b50a611e0a89099cef744fd16ed8e200ec56a9
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -101,6 +104,15 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
+<<<<<<< HEAD
+=======
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+
+>>>>>>> 68b50a611e0a89099cef744fd16ed8e200ec56a9
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
@@ -113,8 +125,15 @@ ipython_config.py
 #pdm.lock
 #   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
 #   in version control.
+<<<<<<< HEAD
 #   https://pdm.fming.dev/#use-with-ide
 .pdm.toml
+=======
+#   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
+.pdm.toml
+.pdm-python
+.pdm-build/
+>>>>>>> 68b50a611e0a89099cef744fd16ed8e200ec56a9
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
@@ -166,6 +185,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+<<<<<<< HEAD
 ### Python Patch ###
 # Poetry local configuration file - https://python-poetry.org/docs/configuration/#local-configuration
 poetry.toml
@@ -178,3 +198,10 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 }{?:".lokijuyhtgr   56"}
+=======
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+>>>>>>> 68b50a611e0a89099cef744fd16ed8e200ec56a9
