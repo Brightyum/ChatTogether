@@ -1,50 +1,75 @@
+import sys
+import os
+
+# 루트 디렉토리 경로를 PYTHONPATH에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify
-#from db.client_model import insert_client  # DB 처리 함수 임포트
+from RAG.LLM.chat_system import ChatSystem
+
+# from db.client_model import insert_client  # DB 처리 함수 임포트
 
 app = Flask(__name__)
+chat_system = ChatSystem()
+# 에러 추적 용이
+app.config["PROPAGATE_EXCEPTIONS"] = True
+
 
 # 메인페이지
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
+
 
 # 회원가입 페이지
-@app.route('/signup', methods=['GET'])
+@app.route("/signup", methods=["GET"])
 def signup_form():
-    return render_template('signup.html')
+    return render_template("signup.html")
 
-@app.route('/signup', methods=['POST'])
+
+@app.route("/signup", methods=["POST"])
 def signup_submit():
-    client_id = request.form['client_id']
-    password = request.form['password']
-    phone = request.form['phone']
-    school = request.form['school']
-    #insert_client(client_id, password, phone, school)   #insert_client는 임의로 이름 지은거라 바꿔도 됨
-    return redirect(url_for('login_form'))
+    client_id = request.form["client_id"]
+    password = request.form["password"]
+    phone = request.form["phone"]
+    school = request.form["school"]
+    # insert_client(client_id, password, phone, school)   #insert_client는 임의로 이름 지은거라 바꿔도 됨
+    return redirect(url_for("login_form"))
+
 
 # 로그인 페이지
-@app.route('/login', methods=['GET'])
+@app.route("/login", methods=["GET"])
 def login_form():
-    return render_template('login.html')
+    return render_template("login.html")
+
 
 # 질의응답 페이지 보여주기
-@app.route('/qa', methods=['GET'])
+@app.route("/qa", methods=["GET"])
 def qa_page():
-    question = request.args.get('question', '')
-    return render_template('qa.html', question=question)
+    question = request.args.get("question", "")
+    return render_template("qa.html", question=question)
+
 
 # 질문을 받아 답변을 반환하는 API (db나 랭체인하는 사람 보고 알아서서)
-@app.route('/ask', methods=['POST'])
+@app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()
-    question = data.get('question', '')
+    question = data.get("question", "")
+
+    if not question.strip():
+        return jsonify({"error": "질문칸을 채워주세요"}), 400
 
     # LangChain 또는 DB 처리 로직 삽입
     # 예시: answer = get_answer_from_llm(question)
-    answer = f"‘{question}’에 대한 테스트 응답입니다."
 
-    return jsonify({'answer': answer})
+    # answer = f"‘{question}’에 대한 테스트 응답입니다."
+    try:
+        answer = chat_system.run(question)
+        return jsonify({"answer": answer})
+    except Exception as e:
+        return jsonify({"에러발생": str(e)}), 500
+
 
 # 서버 실행
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
