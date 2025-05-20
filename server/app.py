@@ -14,6 +14,7 @@ from RAG.LLM.chat_system import ChatSystem
 # from db.client_model import insert_client  # DB 처리 함수 임포트
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key' 
 chat_system = ChatSystem()
 # 에러 추적 용이
 app.config["PROPAGATE_EXCEPTIONS"] = True
@@ -35,16 +36,25 @@ def signup_form():
 def signup_submit():
     client_id = request.form["client_id"]
     password = request.form["client_pass"]  
+    #password_confirm = request.form["password_confirm"] #비밀번호 확인값
     client_name = request.form["client_name"]
     client_age = request.form["client_age"]
     client_gender = request.form["client_gender"]
     client_email = request.form["client_email"]
+
+     #  필수 항목 누락 시
+    if not all([client_id, password, client_name, client_age, client_gender, client_email]):
+        flash("모든 항목을 입력해주세요.")
+        return render_template("signup.html")
     
-   # flash('회원가입이 완료되었습니다.')
-    return redirect(url_for("login_form"))
     
 
-#아이디 중복확인인
+    
+    flash('회원가입이 완료되었습니다.로그인 페이지로 이동합니다.')
+    return render_template("signup_success.html")
+    
+
+#아이디 중복확인
 @app.route('/check_id')
 def check_id():
     client_id = request.args.get('client_id')

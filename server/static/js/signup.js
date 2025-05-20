@@ -3,9 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const checkIdBtn = document.getElementById('check-id-btn');
   const idCheckMsg = document.getElementById('id-check-msg');
 
-  const passwordInput = document.getElementById('password');
+  const passwordInput = document.getElementById('client_pass');
   const passwordConfirmInput = document.getElementById('password-confirm');
   const pwCheckMsg = document.getElementById('pw-check-msg');
+
+  const form = document.getElementById('signup-form');
 
   //  아이디 중복 확인
   checkIdBtn.addEventListener('click', function () {
@@ -46,3 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+
+form.addEventListener('submit', function (event) {
+    const pw = passwordInput.value;
+    const confirmPw = passwordConfirmInput.value;
+    if (pw !== confirmPw) {
+      event.preventDefault();
+      alert("비밀번호가 일치하지 않습니다.");
+    }
+  });
