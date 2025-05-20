@@ -1,0 +1,156 @@
+/* 전체 화면 설정 */
+body {
+  background: linear-gradient(to right, #f5f7fa, #c3cfe2);
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+/* 폼 박스 */
+.form-container {
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+/* 제목 */
+.form-container h2 {
+  margin-bottom: 24px;
+  color: #333;
+}
+
+/* 레이블 및 인풋 */
+.form-container label {
+  display: block;
+  text-align: left;
+  margin: 12px 0 6px;
+  font-weight: 500;
+  color: #444;
+}
+
+.form-container input[type="text"],
+.form-container input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-container input:focus {
+  border-color: #6c63ff;
+  outline: none;
+}
+
+/* 버튼 */
+.form-container button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background-color: #6c63ff;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.form-container button:hover {
+  background-color: #7e74ff;
+}
+
+/* 하단 안내 */
+.form-footer {
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.form-footer a {
+  color: #6c63ff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.input-with-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.input-with-button input[type="text"] {
+  flex: 2;
+  padding: 0 12px;
+  height: 48px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.input-with-button button {
+  flex: 1;
+  padding: 2px 0;
+  font-size: 1rem;
+  height: 48px;
+  background-color: #888;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+   margin-top: -0.5px;
+}
+
+.input-with-button button:hover {
+  background-color: #6c63ff;
+}
+
+.flash-messages {
+  list-style: none;
+  padding: 12px;
+  background-color: #ffecec;
+  color: #d8000c;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.form-container input[type="number"],
+.form-container input[type="email"],
+.form-container select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  appearance: none; /* 기본 화살표 스타일 제거 (선택사항) */
+}
+
+.form-container select:focus {
+  border-color: #6c63ff;
+  outline: none;
+}
