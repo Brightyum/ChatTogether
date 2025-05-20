@@ -24,7 +24,7 @@ class ChatSystem:
         return prompt
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0) #max_tokens=350
         return llm
 
     def get_memory(self):

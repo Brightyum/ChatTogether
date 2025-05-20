@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="sidebar-toggle-wrapper">
-    <button class="toggle-button" id="toggleSidebar" title="사이드바 닫기">☰</button>
+    <button class="toggle-button" id="toggleSidebar" title="사이드바 열기">☰</button>
   </div>
 
   <div class="container">
@@ -38,17 +38,25 @@
     <main class="main" id="main">
       <div class="user-icon">U</div>
 
-      <section class="answer-box">
-        <h3>답변 창</h3>
-        <p id="answer">여기에 답변이 출력됩니다.</p>
-      </section>
+      <!-- 버튼 그룹 -->
+      <div class="navigation-buttons">
+        <a href="{{ url_for('add_prompt') }}" class="nav-btn">프롬프트 추가</a>
+        <a href="{{ url_for('invite_member') }}" class="nav-btn">팀원 초대</a>
+      </div>
 
+      <!-- 대화 로그 -->
+      <div class="chat-log" id="chat-log">
+        <!-- 채팅 내용이 여기에 누적됨 -->
+      </div>
+
+      <!-- 질문 입력 -->
       <form class="input-box" onsubmit="handleSubmit(event)">
         <input type="text" placeholder="질문을 입력하세요..." id="question-input" required />
         <button type="submit">➤</button>
       </form>
     </main>
   </div>
-  <script src="{{ url_for('static', filename='js/qa.js') }}"></script>  
+
+  <script src="{{ url_for('static', filename='js/qa.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>팀원 초대</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/prompt.css') }}">
+</head>
+<body>
+    <div class="form-container">
+  <h1>팀원 초대</h1>
+
+  <!-- Flash 메시지 출력 -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash-message">
+        {% for message in messages %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <label for="team">팀 선택</label>
+    <select name="team" id="team" required>
+      {% for team in team_list %}
+        <option value="{{ team }}">{{ team }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="email">이메일</label>
+    <input type="email" name="email" id="email" required>
+
+    <label for="role">역할</label>
+    <select name="role" id="role" required>
+      <option value="관리자">관리자</option>
+      <option value="팀원">팀원</option>
+    </select>
+
+    <button type="submit">초대 보내기</button>
+  </form>
+    </div>
+</body>
+</html>
