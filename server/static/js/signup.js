@@ -3,12 +3,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const checkIdBtn = document.getElementById('check-id-btn');
   const idCheckMsg = document.getElementById('id-check-msg');
 
+<<<<<<< HEAD
   const passwordInput = document.getElementById('client_pass');
   const passwordConfirmInput = document.getElementById('password-confirm');
   const pwCheckMsg = document.getElementById('pw-check-msg');
 
   const form = document.getElementById('signup-form');
 
+=======
+  const passwordInput = document.getElementById('password');
+  const passwordConfirmInput = document.getElementById('password-confirm');
+  const pwCheckMsg = document.getElementById('pw-check-msg');
+
+>>>>>>> 274de12663328654d7faca71e461c79352974155
   //  아이디 중복 확인
   checkIdBtn.addEventListener('click', function () {
     const clientId = clientIdInput.value;
@@ -48,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+<<<<<<< HEAD
 
 form.addEventListener('submit', function (event) {
     const pw = passwordInput.value;
@@ -57,3 +65,5 @@ form.addEventListener('submit', function (event) {
       alert("비밀번호가 일치하지 않습니다.");
     }
   });
+=======
+>>>>>>> 274de12663328654d7faca71e461c79352974155
