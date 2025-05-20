@@ -53,11 +53,6 @@ class ChatSystem:
         return chain
 
     def run(self, question: str):
-<<<<<<< HEAD
-        response = self.chain.invoke({"question": question})
-        self.memory.save_context({"inputs": question}, {"output": response.content})
-        return response.content
-=======
         # response = self.chain.invoke({"question": question})
         # self.memory.save_context({"inputs": question}, {"output": response.content})
         # return response.content
@@ -75,4 +70,4 @@ class ChatSystem:
             return final_answer
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
->>>>>>> 274de12663328654d7faca71e461c79352974155
+
