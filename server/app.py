@@ -1,7 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-#from db.client_model import insert_client  # DB 처리 함수 임포트
+from flask import Flask, render_template, request, redirect, url_for, jsonify,flash
+from DataBase.Login_function import LoginFunction
 
 app = Flask(__name__)
+
+app.secret_key = 'your-secret-key' 
+
+
+lg = LoginFunction()
 
 # 메인페이지
 @app.route('/')
@@ -23,8 +28,29 @@ def signup_submit():
     return redirect(url_for('login_form'))
 
 # 로그인 페이지
-@app.route('/login', methods=['GET'])
-def login_form():
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user_id = request.form['user_id']
+        user_pass = request.form['user_pass']
+
+        if not user_id or not user_pass:
+            flash("아이디와 비밀번호를 모두 입력하세요.")
+            return render_template('login.html')
+
+        try:
+            result = lg.verify_user_credentials(user_id, user_pass) #사용자 로그인 정보가 데이터베이스에 존재하는지 검증하는 함수
+
+            if result is True:
+                return render_template('index.html', username=user_id)
+            elif result is False:
+                flash("아이디 또는 비밀번호가 일치하지 않습니다.")
+            else:  # None 반환 시 DB 오류
+                flash("로그인 중 서버 오류가 발생했습니다.")
+
+            return render_template('login.html')
+        except Exception as e:
+            print(e)
     return render_template('login.html')
 
 # 질의응답 페이지 보여주기
