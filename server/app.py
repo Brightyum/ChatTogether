@@ -47,19 +47,25 @@ def signup_submit():
     client_id = request.form["client_id"]
     password = request.form["password"]
     password_check = request.form["password_check"]
-    phone = request.form["phone"]
-    school = request.form["school"]
+    name = request.form["client_name"]        # 이름 추가
+    old = request.form["client_old"]          # 나이 추가
     gender = request.form["client_gender"]
     email = request.form["client_email"]
+    phone = request.form["phone"]
+    school = request.form["school"]
 
-    result = membership.process_signup(client_id, password, password_check, phone, school, gender,email)
+    # process_signup의 인자 순서와 맞춤
+    success, message = membership.process_signup(
+        client_id, password, password_check, name, old, gender, email, phone, school
+    )
 
-    if result is True:
+    if success:
         flash("회원가입이 완료되었습니다.")
         return redirect(url_for("login"))
     else:
-        flash("회원가입 중 오류가 발생했습니다.")
+        flash(message)
         return render_template("signup.html")
+
 
 #중복 확인
 @app.route("/check_id")

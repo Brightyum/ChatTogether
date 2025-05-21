@@ -1,5 +1,6 @@
 import pymysql
 import os
+import secrets
 from dotenv import load_dotenv
 
 class MembershipFunction:
@@ -16,34 +17,40 @@ class MembershipFunction:
             port=int(self.db_port),
             user=self.db_user,
             password=self.db_pwd,
-            db="test",
+            db="test",  # DB 이름 확인
             charset="utf8"
         )
 
-    def process_signup(self, client_id, password, password_check, phone, school, gender, email):
-        if not all([client_id, password, password_check, phone, school]):
+    def process_signup(self, client_id, password, password_check, name, old, gender, email, phone, school):
+        # 필수값 확인
+        if not all([client_id, password, password_check, name, old, gender, email, phone, school]):
             return False, "모든 항목을 입력해주세요."
 
         if password != password_check:
             return False, "비밀번호가 서로 일치하지 않습니다."
+
+        api_key = secrets.token_hex(16)  # API 키 생성
+        default_permission = "USER"
 
         try:
             conn = self.get_connection()
             with conn.cursor() as cursor:
                 sql = """
                     INSERT INTO Client_Table (
-                        Client_ID, Client_Pass, Client_Num, Client_Sch, Client_Gen, Client_Eml, Client_per, Client_API
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        Client_ID, Client_Pass, Client_Name, Client_Old, Client_Gen,
+                        Client_Eml, Client_Num, Client_Sch, Client_Per, Client_API
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(sql, (
-                    client_id, password, phone, school, gender, email , "USER", "INACTIVE"
+                    client_id, password, name, old, gender, email, phone, school,
+                    default_permission, api_key
                 ))
             conn.commit()
-            return True
+            return True, "회원가입 성공"
 
         except Exception as e:
             print("[회원가입 오류]:", e)
-            return False
+            return False, "오류가 발생했습니다 다시 실행해주세요"
 
         finally:
             if 'conn' in locals() and conn:
