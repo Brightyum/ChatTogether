@@ -12,6 +12,7 @@ from flask import (
 )
 from DataBase.Login_function import LoginFunction
 from DataBase.user_prompts_function import UserPrompt
+from DataBase.membership_function import MembershipFunction
 import sys
 import os
 
@@ -27,7 +28,7 @@ chat_system = ChatSystem()
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
 lg = LoginFunction()
-
+membership = MembershipFunction()
 
 # 메인페이지
 @app.route("/")
@@ -40,7 +41,7 @@ def home():
 def signup_form():
     return render_template("signup.html")
 
-
+# 회원가입 폼 처리
 @app.route("/signup", methods=["POST"])
 def signup_submit():
     client_id = request.form["client_id"]
@@ -48,53 +49,24 @@ def signup_submit():
     password_check = request.form["password_check"]
     phone = request.form["phone"]
     school = request.form["school"]
+    gender = request.form["client_gender"]
+    email = request.form["client_email"]
 
+    result = membership.process_signup(client_id, password, password_check, phone, school, gender,email)
 
-@app.route("/check_id")
-def check_id():
-    import pymysql
-
-    client_id = request.args.get("client_id")
-
-    try:
-        conn = pymysql.connect(
-            host=db_host,
-            port=int(db_port),
-            user=db_user,
-            password=db_pwd,
-            db="Client_Table",
-            charset="utf8",
-        )
-        with conn.cursor() as cursor:
-            sql = "SELECT * FROM Client_Table WHERE Client_ID = %s"
-            cursor.execute(sql, (client_id,))
-            user = cursor.fetchone()
-
-            if user:
-                return jsonify({"available": False})  # 이미 있음
-            else:
-                return jsonify({"available": True})  # 사용 가능
-
-    except Exception as e:
-        print("ID 중복 확인 오류:", e)
-        return jsonify({"available": False})
-
-    finally:
-        if "conn" in locals():
-            conn.close()
-
-    # 비밀번호 확인
-    if password != password_check:
-        flash("비밀번호가 서로 일치하지 않습니다.")
-        return render_template("signup.html")
-
-    result = insert_client(client_id, password, phone, school)
-
-    if result:
-        return redirect(url_for("login_form"))
+    if result is True:
+        flash("회원가입이 완료되었습니다.")
+        return redirect(url_for("login"))
     else:
         flash("회원가입 중 오류가 발생했습니다.")
         return render_template("signup.html")
+
+#중복 확인
+@app.route("/check_id")
+def check_id():
+   client_id = request.args.get("client_id")
+   return jsonify(membership.check_duplicate_id(client_id))
+
 
 
 # 로그인 페이지
