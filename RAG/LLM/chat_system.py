@@ -13,18 +13,36 @@ class ChatSystem:
         self.memory = self.get_memory()
         self.chain = self.get_chain()
 
-    def get_prompt(self):
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", "You are an helpful assistant that answers in Korean."),
-                MessagesPlaceholder(variable_name="chat_history"),
-                ("human", "#Question:{question}"),
-            ]
-        )
-        return prompt
+    def get_prompt(self, prompt_list=None):
+        # prompt = ChatPromptTemplate.from_messages(
+        #     [
+        #         ("system", "You are an helpful assistant that answers in Korean."),
+        #         MessagesPlaceholder(variable_name="chat_history"),
+        #         ("human", "#Question:{question}"),
+        #     ]
+        # )   
+        messages = [
+            ("system", "You are an helpful assistant that answers in Korean."),
+            MessagesPlaceholder(variable_name="chat_history")
+        ]
+        if not prompt_list:
+            messages.append(("human", "#Question: {question}"))
+
+            result_prompt = ChatPromptTemplate.from_messages(messages)
+            return result_prompt
+        
+        for prompt in prompt_list:
+            messages.append((
+                "system", f"[{prompt['category']}] {prompt['title']} - {prompt['content']}"
+            )) 
+        
+        messages.append(("human", "#Question: {question}"))
+
+        result_prompt = ChatPromptTemplate(messages)
+        return result_prompt
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0) #max_tokens=350
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.5) #max_tokens=350
 
         return llm
 
@@ -53,13 +71,7 @@ class ChatSystem:
         return chain
 
     def run(self, question: str):
-<<<<<<< HEAD
-        response = self.chain.invoke({"question": question})
-        self.memory.save_context({"inputs": question}, {"output": response.content})
-        return response.content
-
-=======
-        # response = self.chain.invoke({"question": question})
+           # response = self.chain.invoke({"question": question})
         # self.memory.save_context({"inputs": question}, {"output": response.content})
         # return response.content
         final_answer = ""
@@ -76,5 +88,5 @@ class ChatSystem:
             return final_answer
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
->>>>>>> e64f8545b0ed5438fa1c151005d70efe20343c99
+
 

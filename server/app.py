@@ -61,10 +61,7 @@ def signup_submit():
     if not all([client_id, password, client_name, client_age, client_gender, client_email]):
         flash("모든 항목을 입력해주세요.")
         return render_template("signup.html")
-    
-    
 
-    
     flash('회원가입이 완료되었습니다.로그인 페이지로 이동합니다.')
     return render_template("signup_success.html")
     
@@ -115,6 +112,7 @@ def stream_ask():
         stream_with_context(chat_system.run(question)), content_type="text/plain"
     )
 
+prompt_list = []
 
 # 프롬프트 추가 페이지
 @app.route("/add_prompt", methods=["GET", "POST"])
@@ -123,8 +121,18 @@ def add_prompt():
         title = request.form["title"]
         category = request.form["category"]
         content = request.form["content"]
+
+        prompt_list.append({
+            "title": title,
+            "category": category,
+            "content": content
+        })
+
+        result = chat_system.get_prompt(prompt_list)
         # TODO: DB에 저장 로직 구현
         flash("프롬프트가 성공적으로 추가되었습니다!")
+        print(result)
+        
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
 
