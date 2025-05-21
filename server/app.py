@@ -60,8 +60,7 @@ def signup_submit():
     )
 
     if success:
-        flash("회원가입이 완료되었습니다.")
-        return redirect(url_for("login"))
+        return render_template("signup_success.html")
     else:
         flash(message)
         return render_template("signup.html")
@@ -159,6 +158,27 @@ def add_prompt():
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
 
+# 팀 생성 페이지
+@app.route("/create_team", methods=["GET", "POST"])
+def create_team():
+    if request.method == "POST":
+        team_name = request.form["team_name"]   #테이블 만들고 그거에 따라서 이름 바꾸면 됨
+        team_desc = request.form["team_desc"]   #얘도
+
+        # DB 처리 위임: 팀 생성 로직은 별도 클래스/파일에서 처리
+        prompt_db = UserPrompt()                #이것도 변경해도 됨
+        success = prompt_db.create_team(team_name, team_desc)       #변경 가능
+
+        if success:
+            flash(f"팀 '{team_name}'이(가) 성공적으로 생성되었습니다.")
+            return redirect(url_for("create_team"))
+        else:
+            flash("팀 생성 중 오류가 발생했습니다.")
+            return render_template("create_team.html")
+
+    return render_template("create_team.html")
+
+
 
 # 팀원 초대 페이지
 @app.route("/invite_member", methods=["GET", "POST"])
@@ -174,7 +194,7 @@ def invite_member():
     return render_template("invite_member.html", team_list=team_list)
 
 
-# 가격 페이지지
+# 가격 페이지
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
