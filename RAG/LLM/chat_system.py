@@ -5,6 +5,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from server.DataBase.user_prompts_function import UserPrompt
 
 
 class ChatSystem:
@@ -13,18 +15,41 @@ class ChatSystem:
         self.memory = self.get_memory()
         self.chain = self.get_chain()
 
-    def get_prompt(self):
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", "You are an helpful assistant that answers in Korean."),
-                MessagesPlaceholder(variable_name="chat_history"),
-                ("human", "#Question:{question}"),
-            ]
-        )
-        return prompt
+    def get_prompt(self, prompt_list=None):
+        # prompt = UserPrompt.getPrompt()
+
+        # prompt = ChatPromptTemplate.from_messages(
+        #     [
+        #         ("system", "You are an helpful assistant that answers in Korean."),
+        #         MessagesPlaceholder(variable_name="chat_history"),
+        #         ("human", "#Question:{question}"),
+        #     ]
+        # )
+        messages = [
+            ("system", "You are an helpful assistant that answers in Korean."),
+            MessagesPlaceholder(variable_name="chat_history"),
+        ]
+        if not prompt_list:
+            messages.append(("human", "#Question: {question}"))
+
+            result_prompt = ChatPromptTemplate.from_messages(messages)
+            return result_prompt
+
+        for prompt in prompt_list:
+            messages.append(
+                (
+                    "system",
+                    f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
+                )
+            )
+
+        messages.append(("human", "#Question: {question}"))
+
+        result_prompt = ChatPromptTemplate(messages)
+        return result_prompt
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0) #max_tokens=350
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.5)  # max_tokens=350
 
         return llm
 
@@ -70,4 +95,3 @@ class ChatSystem:
             return final_answer
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
-

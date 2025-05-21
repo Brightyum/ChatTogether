@@ -2,7 +2,10 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
-class Db():
+
+# 데이터베이스 초기 환경설정 클래스
+# 객체 생성후 getDb로 불러서 사용
+class Db:
 
     def __init__(self):
         load_dotenv()

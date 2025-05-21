@@ -8,8 +8,14 @@ from flask import (
     flash,
     Response,
     stream_with_context,
+    session,
 )
 from DataBase.Login_function import LoginFunction
+from DataBase.user_prompts_function import UserPrompt
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from RAG.LLM.chat_system import ChatSystem
 
 app = Flask(__name__)
@@ -108,6 +114,7 @@ def login():
             )  # 사용자 로그인 정보가 데이터베이스에 존재하는지 검증하는 함수
 
             if result is True:
+                session["user_id"] = user_id  # 사용자 아이디값 세션에 저장
                 return render_template("index.html", username=user_id)
             elif result is False:
                 flash("아이디 또는 비밀번호가 일치하지 않습니다.")
@@ -152,12 +159,24 @@ def add_prompt():
         category = request.form["category"]
         content = request.form["content"]
 
+        user_id = session.get("user_id")
+
         prompt_list.append({"title": title, "category": category, "content": content})
 
-        result = chat_system.get_prompt(prompt_list)
+        if not user_id:
+            flash("로그인이 필요합니다.")
+            return redirect(url_for("login"))  # 되돌아가는 코드인데 잘 모름 - 염승욱
+
+        # result = chat_system.get_prompt(prompt_list)
         # TODO: DB에 저장 로직 구현
+        prompt_db = UserPrompt()
+        prompt_db.savePrompt(user_id, title, category, content)
+
+        # DB에서 가져오기
+
         flash("프롬프트가 성공적으로 추가되었습니다!")
-        print(result)
+
+        # print(result)
 
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
