@@ -5,7 +5,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
-
+from langchain_core.output_parsers import StrOutputParser
 
 class ChatSystem:
     def __init__(self):
@@ -55,3 +55,5 @@ class ChatSystem:
         response = self.chain.invoke({"question": question})
         self.memory.save_context({"inputs": question}, {"output": response.content})
         return response.content
+
+
