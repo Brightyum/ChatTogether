@@ -38,7 +38,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 db_host = os.getenv("DB_HOST")
-db_port = int(os.getenv("DB_PORT"))  # 문자열로 로드되므로 정수 변환
+db_port = os.getenv("DB_PORT")  
 db_user = os.getenv("DB_USER")
 db_pwd = os.getenv("DB_PWD")
 db_name = os.getenv("DB_NAME")

@@ -3,7 +3,7 @@ import os
 
 # app.py 맨 위에 추가
 from DataBase.db_base import get_connection
-
+#테스트
 
 # 루트 디렉토리 경로를 PYTHONPATH에 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -141,6 +141,13 @@ def invite_member():
         flash(f"{email} 님을 {team} 팀에 {role} 권한으로 초대했습니다.")
         return redirect(url_for("invite_member"))
     return render_template("invite_member.html", team_list=team_list)
+
+
+#가격 페이지지
+@app.route('/pricing')
+def pricing():
+    return render_template('pricing.html')
+
 
 
 # 서버 실행

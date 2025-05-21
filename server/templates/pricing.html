@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ETA 요금제</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pricing.css') }}">
+</head>
+<body>
+  <div class="pricing-container">
+    <h1 class="pricing-title">ETA 요금제 안내</h1>
+    <div class="pricing-cards">
+      <div class="card" onclick="selectPlan(this)">
+        <h2>무료 플랜</h2>
+        <p class="price">₩0</p>
+        <p class="desc">월 30회까지 무료 질문 가능</p>
+        <ul>
+          <li>질문 30건/월</li>
+          <li>모델: 아직 못정함</li>
+          <li>팀 협업 기능 제한</li>
+        </ul>
+      </div>
+
+      <div class="card" onclick="selectPlan(this)">
+        <h2>정액제 플랜</h2>
+        <p class="price">₩9,900</p>
+        <p class="desc">무제한 질문 가능</p>
+        <ul>
+          <li>모델: 아직 못정함</li>
+          <li>팀 협업 + 프롬프트 저장 무제한</li>
+        </ul>
+      </div>
+
+      <div class="card" onclick="selectPlan(this)">
+        <h2>토큰 기반 과금 플랜</h2>
+        <p class="desc"><strong>사용한 만큼만 요금 부과</strong></p>
+        <ul>
+          <li>기본요금 없음</li>
+          <li>1K 토큰당 10원?(얼마로 해야할까요..)</li>
+          <li>실시간 토큰 사용량 확인 가능</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectPlan(selectedCard) {
+      const cards = document.querySelectorAll('.card');
+      cards.forEach(card => card.classList.remove('selected'));
+      selectedCard.classList.add('selected');
+    }
+  </script>
+</body>
+</html>
