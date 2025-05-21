@@ -22,10 +22,55 @@ def signup_form():
 def signup_submit():
     client_id = request.form['client_id']
     password = request.form['password']
+    password_check = request.form['password_check']
     phone = request.form['phone']
     school = request.form['school']
-    #insert_client(client_id, password, phone, school)   #insert_client는 임의로 이름 지은거라 바꿔도 됨
-    return redirect(url_for('login_form'))
+    
+@app.route('/check_id')
+def check_id():
+    import pymysql
+    client_id = request.args.get('client_id')
+
+    try:
+        conn = pymysql.connect(
+            host=db_host,
+            port=int(db_port),
+            user=db_user,
+            password=db_pwd,
+            db="Client_Table",
+            charset="utf8"
+        )
+        with conn.cursor() as cursor:
+            sql = "SELECT * FROM Client_Table WHERE Client_ID = %s"
+            cursor.execute(sql, (client_id,))
+            user = cursor.fetchone()
+
+            if user:
+                return jsonify({'available': False})  # 이미 있음
+            else:
+                return jsonify({'available': True})   # 사용 가능
+
+    except Exception as e:
+        print("ID 중복 확인 오류:", e)
+        return jsonify({'available': False})
+
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+    # 비밀번호 확인
+    if password != password_check:
+        flash("비밀번호가 서로 일치하지 않습니다.")
+        return render_template('signup.html')
+
+    result = insert_client(client_id, password, phone, school)
+
+    if result:
+        return redirect(url_for('login_form'))
+    else:
+        flash("회원가입 중 오류가 발생했습니다.")
+        return render_template('signup.html')
 
 # 로그인 페이지
 @app.route('/login', methods=['GET', 'POST'])
