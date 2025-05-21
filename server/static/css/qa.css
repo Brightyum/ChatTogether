@@ -115,12 +115,7 @@ body {
 }
 
 .answer-box {
-  flex-grow: 1;
-  background-color: #f8f8f8;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
-  overflow-y: auto;
+ display: none;
 }
 
 .answer-box h3 {
@@ -145,6 +140,7 @@ body {
 }
 
 .input-box button {
+  content : "질문 보내기";
   background-color: #6C63FF;
   color: white;
   border: none;
@@ -152,4 +148,60 @@ body {
   border-radius: 8px;
   font-size: 1.2rem;
   cursor: pointer;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+}
+
+.nav-btn {
+  background-color: #6c63ff;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.nav-btn:hover {
+  background-color: #7e73ff;
+}
+
+.chat-log {
+ flex-grow: 1;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+  margin-bottom: 15px;
+  max-height: 500px;
+}
+
+.chat-entry {
+   margin-bottom: 12px;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.user-entry {
+  text-align: right;
+  color: #333;
+  font-weight: 500;
+}
+
+.bot-entry {
+  text-align: left;
+  color: #4f46e5;
+  font-style: italic;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
 }

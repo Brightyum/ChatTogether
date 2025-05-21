@@ -1,0 +1,48 @@
+.form-container {
+  max-width: 600px;
+  margin: 60px auto; /* 상단 여백 + 중앙 정렬 */
+  padding: 30px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-container label {
+  font-weight: 500;
+  color: #444;
+}
+
+.form-container input,
+.form-container textarea,
+.form-container select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.form-container button {
+  background-color: #6c63ff;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.form-container button:hover {
+  background-color: #7e73ff;
+}

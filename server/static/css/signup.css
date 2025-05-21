@@ -126,3 +126,31 @@ body {
   background-color: #6c63ff;
 }
 
+.flash-messages {
+  list-style: none;
+  padding: 12px;
+  background-color: #ffecec;
+  color: #d8000c;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.form-container input[type="number"],
+.form-container input[type="email"],
+.form-container select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  appearance: none; /* 기본 화살표 스타일 제거 (선택사항) */
+}
+
+.form-container select:focus {
+  border-color: #6c63ff;
+  outline: none;
+}

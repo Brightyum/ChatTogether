@@ -24,7 +24,8 @@ class ChatSystem:
         return prompt
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0) #max_tokens=350
+
         return llm
 
     def get_memory(self):
@@ -52,8 +53,28 @@ class ChatSystem:
         return chain
 
     def run(self, question: str):
+<<<<<<< HEAD
         response = self.chain.invoke({"question": question})
         self.memory.save_context({"inputs": question}, {"output": response.content})
         return response.content
 
+=======
+        # response = self.chain.invoke({"question": question})
+        # self.memory.save_context({"inputs": question}, {"output": response.content})
+        # return response.content
+        final_answer = ""
+        try:
+            response = self.chain.stream({"question": question})
+
+            for token in response:
+                print(token.content, end="", flush=True)
+                content = token.content
+                final_answer += token.content
+                yield content
+
+            self.memory.save_context({"inputs": question}, {"output": final_answer})
+            return final_answer
+        except Exception as e:
+            yield f"\n[에러 발생]: {str(e)}"
+>>>>>>> e64f8545b0ed5438fa1c151005d70efe20343c99
 
