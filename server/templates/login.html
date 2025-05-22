@@ -9,6 +9,15 @@
 <body>
   <div class="form-container">
     <h2>로그인</h2>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
     <form method="POST" action="/login">
       <label for="client_id">아이디</label>
       <input type="text" id="user_id" name="user_id" required>
@@ -20,16 +29,5 @@
     </form>
     <p class="form-footer">계정이 없으신가요? <a href="/signup">회원가입</a></p>
   </div>
-
-  {% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class="flash-messages">
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-
 </body>
 </html>

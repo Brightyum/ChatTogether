@@ -282,3 +282,9 @@ body {
     box-shadow: 0 0 40px rgba(156, 197, 255, 1);
   }
 }
+
+.nav-right .welcome-message {
+  margin-right: 16px;
+  font-weight: 500;
+  color: #333;
+}

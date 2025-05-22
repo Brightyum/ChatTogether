@@ -90,8 +90,10 @@ def login():
                 user_id, user_pass
             )  # 사용자 로그인 정보가 데이터베이스에 존재하는지 검증하는 함수
 
-            if result is True:
+            if result :
                 session["user_id"] = user_id  # 사용자 아이디값 세션에 저장
+                session["user_name"] = result["user_name"]  # 이름 저장
+                flash(f"{result['user_name']}님 환영합니다.")
                 return render_template("index.html", username=user_id)
             elif result is False:
                 flash("아이디 또는 비밀번호가 일치하지 않습니다.")
@@ -102,6 +104,13 @@ def login():
         except Exception as e:
             print(e)
     return render_template("login.html")
+
+#로그아웃 페이지
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("home"))
+
 
 
 # 질의응답 페이지 보여주기
