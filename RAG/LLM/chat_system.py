@@ -10,42 +10,33 @@ from server.DataBase.user_prompts_function import UserPrompt
 
 
 class ChatSystem:
-    def __init__(self):
+    def __init__(self, user_id=None):
         load_dotenv()
+        self.user_id = user_id
         self.memory = self.get_memory()
         self.chain = self.get_chain()
 
-    def get_prompt(self, prompt_list=None):
-        # prompt = UserPrompt.getPrompt()
+    def get_prompt(self):
+        user_prompt = UserPrompt()
+        prompt_list = user_prompt.getPrompt(self.user_id)
 
-        # prompt = ChatPromptTemplate.from_messages(
-        #     [
-        #         ("system", "You are an helpful assistant that answers in Korean."),
-        #         MessagesPlaceholder(variable_name="chat_history"),
-        #         ("human", "#Question:{question}"),
-        #     ]
-        # )
         messages = [
             ("system", "You are an helpful assistant that answers in Korean."),
             MessagesPlaceholder(variable_name="chat_history"),
         ]
-        if not prompt_list:
-            messages.append(("human", "#Question: {question}"))
 
-            result_prompt = ChatPromptTemplate.from_messages(messages)
-            return result_prompt
-
-        for prompt in prompt_list:
-            messages.append(
-                (
-                    "system",
-                    f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
+        if prompt_list:
+            for prompt in prompt_list:
+                messages.append(
+                    (
+                        "system",
+                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
+                    )
                 )
-            )
 
         messages.append(("human", "#Question: {question}"))
 
-        result_prompt = ChatPromptTemplate(messages)
+        result_prompt = ChatPromptTemplate.from_messages(messages)
         return result_prompt
 
     def get_llm(self):
@@ -78,9 +69,7 @@ class ChatSystem:
         return chain
 
     def run(self, question: str):
-        # response = self.chain.invoke({"question": question})
-        # self.memory.save_context({"inputs": question}, {"output": response.content})
-        # return response.content
+
         final_answer = ""
         try:
             response = self.chain.stream({"question": question})

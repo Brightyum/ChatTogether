@@ -24,12 +24,12 @@ app = Flask(__name__)
 
 app.secret_key = "your-secret-key"
 
-chat_system = ChatSystem()
 # 에러 추적 용이
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
 lg = LoginFunction()
 membership = MembershipFunction()
+
 
 # 메인페이지
 @app.route("/")
@@ -42,14 +42,15 @@ def home():
 def signup_form():
     return render_template("signup.html")
 
+
 # 회원가입 폼 처리
 @app.route("/signup", methods=["POST"])
 def signup_submit():
     client_id = request.form["client_id"]
     password = request.form["password"]
     password_check = request.form["password_check"]
-    name = request.form["client_name"]        # 이름 추가
-    old = request.form["client_old"]          # 나이 추가
+    name = request.form["client_name"]  # 이름 추가
+    old = request.form["client_old"]  # 나이 추가
     gender = request.form["client_gender"]
     email = request.form["client_email"]
     phone = request.form["phone"]
@@ -67,12 +68,11 @@ def signup_submit():
         return render_template("signup.html")
 
 
-#중복 확인
+# 중복 확인
 @app.route("/check_id")
 def check_id():
-   client_id = request.args.get("client_id")
-   return jsonify(membership.check_duplicate_id(client_id))
-
+    client_id = request.args.get("client_id")
+    return jsonify(membership.check_duplicate_id(client_id))
 
 
 # 로그인 페이지
@@ -91,7 +91,7 @@ def login():
                 user_id, user_pass
             )  # 사용자 로그인 정보가 데이터베이스에 존재하는지 검증하는 함수
 
-            if result :
+            if result:
                 session["user_id"] = user_id  # 사용자 아이디값 세션에 저장
                 session["user_name"] = result["user_name"]  # 이름 저장
                 flash(f"{result['user_name']}님 환영합니다.")
@@ -106,12 +106,12 @@ def login():
             print(e)
     return render_template("login.html")
 
-#로그아웃 페이지
+
+# 로그아웃 페이지
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("home"))
-
 
 
 # 질의응답 페이지 보여주기
@@ -126,6 +126,13 @@ def qa_page():
 def stream_ask():
     data = request.get_json()
     question = data.get("question", "").strip()
+
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "로그인이 필요합니다."}), 401
+
+    chat_system = ChatSystem(user_id=user_id)
 
     if not question:
         return jsonify({"error": "질문칸을 채워주세요"}), 400
@@ -168,16 +175,19 @@ def add_prompt():
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
 
+
 # 팀 생성 페이지
 @app.route("/create_team", methods=["GET", "POST"])
 def create_team():
     if request.method == "POST":
-        team_name = request.form["team_name"]   #테이블 만들고 그거에 따라서 이름 바꾸면 됨
-        team_desc = request.form["team_desc"]   #얘도
+        team_name = request.form[
+            "team_name"
+        ]  # 테이블 만들고 그거에 따라서 이름 바꾸면 됨
+        team_desc = request.form["team_desc"]  # 얘도
 
         # DB 처리 위임: 팀 생성 로직은 별도 클래스/파일에서 처리
-        prompt_db = UserPrompt()                #이것도 변경해도 됨
-        success = prompt_db.create_team(team_name, team_desc)       #변경 가능
+        prompt_db = UserPrompt()  # 이것도 변경해도 됨
+        success = prompt_db.create_team(team_name, team_desc)  # 변경 가능
 
         if success:
             flash(f"팀 '{team_name}'이(가) 성공적으로 생성되었습니다.")
@@ -187,7 +197,6 @@ def create_team():
             return render_template("create_team.html")
 
     return render_template("create_team.html")
-
 
 
 # 팀원 초대 페이지
@@ -209,19 +218,21 @@ def invite_member():
 def pricing():
     return render_template("pricing.html")
 
-#사용자 정보 페이지
+
+# 사용자 정보 페이지
 @app.route("/profile", methods=["GET"])
 def profile():
-    if 'user_id' not in session:
+    if "user_id" not in session:
         return redirect(url_for("login"))
-    
+
     db = UserDB()
     user = db.get_user_info(session["user_id"])
     return render_template("profile.html", user=user)
 
+
 @app.route("/update_profile", methods=["POST"])
 def update_profile():
-    if 'user_id' not in session:
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
     client_id = session["user_id"]
@@ -242,7 +253,7 @@ def update_profile():
         school=school,
         password=password,
         old=old,
-        gender=gender
+        gender=gender,
     )
 
     if success:
@@ -252,12 +263,13 @@ def update_profile():
 
     return redirect(url_for("mypage"))
 
-#마이페이지
+
+# 마이페이지
 @app.route("/mypage")
 def mypage():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    
+
     db = UserDB()
     user = db.get_user_info(session["user_id"])
     return render_template("mypage.html", user=user)
