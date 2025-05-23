@@ -53,6 +53,7 @@
     <div class="nav-right">
       {% if session.get("user_id") %}
       <span class="welcome-message">환영합니다, <strong>{{ session.get("user_name") }}</strong>님</span>
+       <a href="{{ url_for('mypage') }}" class="cta">마이페이지</a>
        <a href="#" class="cta" onclick="confirmLogout()">로그아웃</a>
       {% else %}
       <a href="{{ url_for('login') }}" class="cta">로그인</a>

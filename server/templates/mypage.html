@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>마이페이지 | ETA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mypage.css') }}">
+</head>
+<body>
+     <!-- 네비게이션 바-->
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ETA 로고">
+        <span>ETA</span>
+      </div>
+      <nav class="menu">
+        <a href="#">Solutions <span class="arrow">▼</span></a>
+        <a href="#">Resources <span class="arrow">▼</span></a>
+        <a href="#">Community <span class="arrow">▼</span></a>
+        <a href="/pricing">Pricing<span class="arrow">▼</span></a>
+      </nav>
+    </div>
+    <div class="nav-right">
+      {% if session.get("user_id") %}
+      <span class="welcome-message">환영합니다, <strong>{{ session.get("user_name") }}</strong>님</span>
+       <a href="{{ url_for('mypage') }}" class="cta">마이페이지</a>
+       <a href="#" class="cta" onclick="confirmLogout()">로그아웃</a>
+      {% else %}
+      <a href="{{ url_for('login') }}" class="cta">로그인</a>
+      <a href="{{ url_for('signup_form') }}" class="cta">회원가입</a>
+      {% endif %}
+    </div>
+  </header>
+
+    <div class="mypage-container">
+        <h2>마이페이지</h2>
+
+        <ul class="user-info-list">
+            <li><strong>아이디:</strong> {{ user[0] }}</li>
+            <li><strong>이름:</strong> {{ user[1] }}</li>
+            <li><strong>나이:</strong> {{ user[3] }}</li>
+            <li><strong>성별:</strong> {{ user[4] }}</li>
+            <li><strong>이메일:</strong> {{ user[5] }}</li>
+            <li><strong>전화번호:</strong> {{ user[6] }}</li>
+            <li><strong>학교:</strong> {{ user[7] }}</li>
+            <!-- 팀 정보 추후 확장 -->
+        </ul>
+        
+
+        <a href="{{ url_for('profile') }}" class="edit-btn">정보 수정하기</a>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script> 
+</body>
+</html>

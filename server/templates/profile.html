@@ -31,7 +31,7 @@
             <input type="password" name="password" placeholder="변경 시에만 입력">
 
             <label>나이</label>
-            <input type="number" name="client_old" value="{{ user[2] }}" required>
+            <input type="number" name="client_old" value="{{ user[3] }}" required>
 
             <label>성별</label>
             <select name="client_gender" required>
@@ -51,7 +51,7 @@
             <button type="submit">정보 수정</button>
         </form>
 
-        <p class="back-link"><a href="{{ url_for('qa_page') }}">← 질문 페이지로 돌아가기</a></p>
+        <p class="back-link"><a href="{{ url_for('mypage') }}">← 마이 페이지로 돌아가기</a></p>
     </div>
 </body>
 </html>

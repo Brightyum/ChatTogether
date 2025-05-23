@@ -250,7 +250,17 @@ def update_profile():
     else:
         flash("변경된 항목이 없습니다.")
 
-    return redirect(url_for("profile"))
+    return redirect(url_for("mypage"))
+
+#마이페이지
+@app.route("/mypage")
+def mypage():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    db = UserDB()
+    user = db.get_user_info(session["user_id"])
+    return render_template("mypage.html", user=user)
 
 
 # 서버 실행
