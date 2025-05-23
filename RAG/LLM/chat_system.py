@@ -7,6 +7,9 @@ from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from server.DataBase.user_prompts_function import UserPrompt
+from server.DataBase.user_qna_save import UserQnaSave
+
+MAX_MEMORY_LENGTH = 20
 
 
 class ChatSystem:
@@ -54,6 +57,11 @@ class ChatSystem:
         return memory
 
     def get_runnable(self):
+        # RunnableLambda - 함수 매핑
+        # chat_history = {'chat_history': [대화기록]}
+        # itemgetter('키 이름') - 딕셔너리에 키이름의 키를 가진 value값을 반환
+        # RunnalblePassthrough - 입력 쌍을 배출
+        # runnable 객체가 받는 매서드의 반환값 + chat_history
         runnable = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
             | itemgetter("chat_history")
@@ -84,3 +92,36 @@ class ChatSystem:
             return final_answer
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
+
+    def check_memory_limit(self):
+        messages = self.memory.chat_memory.messages
+        if len(messages) > MAX_MEMORY_LENGTH:
+            # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 20개)
+            self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
+            # 대화들 중 오래된 20개 요약
+            summary = self.summarize_messages(messages[:-MAX_MEMORY_LENGTH])
+            # 최신 대화는 메모리에 저장
+            self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
+            self.memory.chat_memory.add_user_message("[이전 대화 요약]")
+            self.memory.chat_memory.add_ai_message(summary)
+
+    def summarize_messages(self, messages):
+        summary_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "다음 사용자와 AI 간의 대화를 맥락을 유지하며 한글로 간결히 요약하세요.",
+                ),
+                (
+                    "human",
+                    "\n".join([f"{m.type.upper()}: {m.content}" for m in messages]),
+                ),
+            ]
+        )
+        chain = summary_prompt | self.get_llm() | StrOutputParser()
+        return chain.invoke({})
+
+    def save_to_db(self, messages):
+        db = UserQnaSave()
+        summary = self.summarize_messages(messages)
+        db.save_chat_messages(self.user_id, messages, summary)
