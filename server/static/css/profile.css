@@ -1,0 +1,100 @@
+/* 전체 화면 정렬 및 배경 */
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to right, #fdfbfb, #ebedee);
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* 메인 컨테이너 */
+.profile-container {
+  background-color: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+}
+
+/* 제목 */
+.profile-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+/* 레이블 및 인풋 스타일 */
+.profile-container label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+  margin-top: 16px;
+}
+
+.profile-container input,
+.profile-container select {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.profile-container input:focus,
+.profile-container select:focus {
+  border-color: #6c63ff;
+  outline: none;
+}
+
+/* 수정 버튼 */
+.profile-container button[type="submit"] {
+  width: 100%;
+  padding: 14px;
+  margin-top: 24px;
+  font-size: 1rem;
+  color: white;
+  background-color: #6c63ff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.profile-container button[type="submit"]:hover {
+  background-color: #7a71ff;
+}
+
+/* 뒤로가기 링크 */
+.back-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.back-link a {
+  color: #6c63ff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link a:hover {
+  text-decoration: underline;
+}
+
+/* flash 메시지 */
+.flash-messages {
+  list-style: none;
+  padding: 12px;
+  background-color: #ffecec;
+  color: #d8000c;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}

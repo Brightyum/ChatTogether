@@ -13,6 +13,7 @@ from flask import (
 from DataBase.Login_function import LoginFunction
 from DataBase.user_prompts_function import UserPrompt
 from DataBase.membership_function import MembershipFunction
+from DataBase.user_db import UserDB
 import sys
 import os
 
@@ -207,6 +208,49 @@ def invite_member():
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
+
+#사용자 정보 페이지
+@app.route("/profile", methods=["GET"])
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
+    
+    db = UserDB()
+    user = db.get_user_info(session["user_id"])
+    return render_template("profile.html", user=user)
+
+@app.route("/update_profile", methods=["POST"])
+def update_profile():
+    if 'user_id' not in session:
+        return redirect(url_for("login"))
+
+    client_id = session["user_id"]
+    name = request.form.get("name")
+    password = request.form.get("password")
+    old = request.form.get("client_old")
+    gender = request.form.get("client_gender")
+    email = request.form.get("email")
+    phone = request.form.get("phone")
+    school = request.form.get("school")
+
+    db = UserDB()
+    success = db.update_user_info(
+        client_id=session["user_id"],
+        name=name,
+        email=email,
+        phone=phone,
+        school=school,
+        password=password,
+        old=old,
+        gender=gender
+    )
+
+    if success:
+        flash("정보가 성공적으로 수정되었습니다.")
+    else:
+        flash("변경된 항목이 없습니다.")
+
+    return redirect(url_for("profile"))
 
 
 # 서버 실행
