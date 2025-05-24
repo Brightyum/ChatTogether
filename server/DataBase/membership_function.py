@@ -1,44 +1,74 @@
 import pymysql
 import os
+import secrets
 from dotenv import load_dotenv
 
-load_dotenv()
-db_host = os.getenv("DB_HOST")
-db_port = os.getenv("DB_PORT")
-db_user = os.getenv("DB_USER")
-db_pwd = os.getenv("DB_PWD")
+class MembershipFunction:
+    def __init__(self):
+        load_dotenv()
+        self.db_host = os.getenv("DB_HOST")
+        self.db_port = os.getenv("DB_PORT")
+        self.db_user = os.getenv("DB_USER")
+        self.db_pwd = os.getenv("DB_PWD")
 
-def insert_client(client_id, password, phone, school):
-    try:
-        conn = pymysql.connect(
-            host=db_host,
-            port=int(db_port),
-            user=db_user,
-            password=db_pwd,
-            db="test",  # 실제 DB명
+    def get_connection(self):
+        return pymysql.connect(
+            host=self.db_host,
+            port=int(self.db_port),
+            user=self.db_user,
+            password=self.db_pwd,
+            db="test",  # DB 이름 확인
             charset="utf8"
         )
 
-        with conn.cursor() as cursor:
-            sql = """
-                INSERT INTO Client_Table (
-                    Client_ID, Client_Pass, Client_Phone, Client_School, Client_Per, Client_API
-                ) VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            default_per = "USER"
-            default_api = "INACTIVE"
+    def process_signup(self, client_id, password, password_check, name, old, gender, email, phone, school):
+        # 필수값 확인
+        if not all([client_id, password, password_check, name, old, gender, email, phone, school]):
+            return False, "모든 항목을 입력해주세요."
 
-            cursor.execute(sql, (
-                client_id, password, phone, school, default_per, default_api
-            ))
+        if password != password_check:
+            return False, "비밀번호가 서로 일치하지 않습니다."
 
-        conn.commit()
-        return True
+        api_key = secrets.token_hex(16)  # API 키 생성
+        default_permission = "USER"
 
-    except Exception as e:
-        print("[회원가입 오류]:", e)
-        return False
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cursor:
+                sql = """
+                    INSERT INTO Client_Table (
+                        Client_ID, Client_Pass, Client_Name, Client_Old, Client_Gen,
+                        Client_Eml, Client_Num, Client_Sch, Client_Per, Client_API
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cursor.execute(sql, (
+                    client_id, password, name, old, gender, email, phone, school,
+                    default_permission, api_key
+                ))
+            conn.commit()
+            return True, "회원가입 성공"
 
-    finally:
-        if 'conn' in locals() and conn:
-            conn.close()
+        except Exception as e:
+            print("[회원가입 오류]:", e)
+            return False, "오류가 발생했습니다 다시 실행해주세요"
+
+        finally:
+            if 'conn' in locals() and conn:
+                conn.close()
+
+    def check_duplicate_id(self, client_id):
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cursor:
+                sql = "SELECT * FROM Client_Table WHERE Client_ID = %s"
+                cursor.execute(sql, (client_id,))
+                user = cursor.fetchone()
+                return {"available": False} if user else {"available": True}
+
+        except Exception as e:
+            print("[ID 중복 확인 오류]:", e)
+            return {"available": False}
+
+        finally:
+            if 'conn' in locals() and conn:
+                conn.close()

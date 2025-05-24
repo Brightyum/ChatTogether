@@ -6,43 +6,46 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from server.DataBase.user_prompts_function import UserPrompt
+from server.DataBase.user_qna_save import UserQnaSave
+
+MAX_MEMORY_LENGTH = 20
+
+
 
 class ChatSystem:
-    def __init__(self):
+    def __init__(self, user_id=None):
         load_dotenv()
+        self.user_id = user_id
         self.memory = self.get_memory()
         self.chain = self.get_chain()
 
-    def get_prompt(self, prompt_list=None):
-        # prompt = ChatPromptTemplate.from_messages(
-        #     [
-        #         ("system", "You are an helpful assistant that answers in Korean."),
-        #         MessagesPlaceholder(variable_name="chat_history"),
-        #         ("human", "#Question:{question}"),
-        #     ]
-        # )   
+
+    def get_prompt(self):
+        user_prompt = UserPrompt()
+        prompt_list = user_prompt.getPrompt(self.user_id)
+
         messages = [
             ("system", "You are an helpful assistant that answers in Korean."),
-            MessagesPlaceholder(variable_name="chat_history")
+            MessagesPlaceholder(variable_name="chat_history"),
         ]
-        if not prompt_list:
-            messages.append(("human", "#Question: {question}"))
 
-            result_prompt = ChatPromptTemplate.from_messages(messages)
-            return result_prompt
-        
-        for prompt in prompt_list:
-            messages.append((
-                "system", f"[{prompt['category']}] {prompt['title']} - {prompt['content']}"
-            )) 
-        
+        if prompt_list:
+            for prompt in prompt_list:
+                messages.append(
+                    (
+                        "system",
+                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
+                    )
+                )
+
         messages.append(("human", "#Question: {question}"))
 
-        result_prompt = ChatPromptTemplate(messages)
+        result_prompt = ChatPromptTemplate.from_messages(messages)
         return result_prompt
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.5) #max_tokens=350
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.5)  # max_tokens=350
 
         return llm
 
@@ -56,6 +59,11 @@ class ChatSystem:
         return memory
 
     def get_runnable(self):
+        # RunnableLambda - 함수 매핑
+        # chat_history = {'chat_history': [대화기록]}
+        # itemgetter('키 이름') - 딕셔너리에 키이름의 키를 가진 value값을 반환
+        # RunnalblePassthrough - 입력 쌍을 배출
+        # runnable 객체가 받는 매서드의 반환값 + chat_history
         runnable = RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
             | itemgetter("chat_history")
@@ -71,9 +79,7 @@ class ChatSystem:
         return chain
 
     def run(self, question: str):
-           # response = self.chain.invoke({"question": question})
-        # self.memory.save_context({"inputs": question}, {"output": response.content})
-        # return response.content
+
         final_answer = ""
         try:
             response = self.chain.stream({"question": question})
@@ -89,4 +95,37 @@ class ChatSystem:
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
 
+
+    def check_memory_limit(self):
+        messages = self.memory.chat_memory.messages
+        if len(messages) > MAX_MEMORY_LENGTH:
+            # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 20개)
+            self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
+            # 대화들 중 오래된 20개 요약
+            summary = self.summarize_messages(messages[:-MAX_MEMORY_LENGTH])
+            # 최신 대화는 메모리에 저장
+            self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
+            self.memory.chat_memory.add_user_message("[이전 대화 요약]")
+            self.memory.chat_memory.add_ai_message(summary)
+
+    def summarize_messages(self, messages):
+        summary_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "다음 사용자와 AI 간의 대화를 맥락을 유지하며 한글로 간결히 요약하세요.",
+                ),
+                (
+                    "human",
+                    "\n".join([f"{m.type.upper()}: {m.content}" for m in messages]),
+                ),
+            ]
+        )
+        chain = summary_prompt | self.get_llm() | StrOutputParser()
+        return chain.invoke({})
+
+    def save_to_db(self, messages):
+        db = UserQnaSave()
+        summary = self.summarize_messages(messages)
+        db.save_chat_messages(self.user_id, messages, summary)
 

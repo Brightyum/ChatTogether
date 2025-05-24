@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>팀 생성 | ETA</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/create_team.css') }}">
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>팀 생성</h2>
+
+    <!-- flash 메시지 표시 영역 -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/create_team">
+      <div>
+        <label for="team_name">팀 이름</label>
+        <input type="text" id="team_name" name="team_name" required>
+      </div>
+
+      <div>
+        <label for="team_desc">팀 설명</label>
+        <textarea id="team_desc" name="team_desc" rows="5" required></textarea>
+      </div>
+
+      <button type="submit">팀 생성</button>
+    </form>
+  </div>
+
+</body>
+</html>

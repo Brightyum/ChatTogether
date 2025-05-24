@@ -103,3 +103,10 @@ function animate(time) {
 setTimeout(() => {
   document.getElementById('hero-content').classList.add('show');
 }, 6500);
+
+function confirmLogout() {
+    const result = confirm("로그아웃 하시겠습니까?");
+    if (result) {
+      window.location.href = "/logout";  // 실제 Flask 라우트에 맞춰 리디렉션
+    }
+  }

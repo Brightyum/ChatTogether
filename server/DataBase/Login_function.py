@@ -23,12 +23,18 @@ class LoginFunction():
             )
 
             with conn.cursor() as cursor:
-                sql = "SELECT * FROM Client_Table WHERE Client_ID = %s AND Client_Pass = %s"
+                #sql = "SELECT * FROM Client_Table WHERE Client_ID = %s AND Client_Pass = %s"
+                #이름 가져오기 추가
+                sql = """
+                SELECT Client_ID, Client_Name       
+                FROM Client_Table
+                WHERE Client_ID = %s AND Client_Pass = %s
+                """
                 cursor.execute(sql, (user_id, user_pass))
                 result = cursor.fetchone()
 
             if result:
-                return True
+                return {"user_id": result[0], "user_name": result[1]}
             else:
                 return False
 
