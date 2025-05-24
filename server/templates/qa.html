@@ -14,12 +14,14 @@
   <div class="container">
     <!-- 사이드바 -->
     <aside class="sidebar" id="sidebar">
-      <h2>팀 목록</h2>
-      <ul>
-        <li>팀 A</li>
-        <li>팀 B</li>
-        <li>팀 C</li>
-      </ul>
+      <!-- 팀 목록 -->
+    <h2>팀 목록</h2>
+    <ul>
+    {% for team in teams %}
+    <li>{{ team }}</li>
+    {% endfor %}
+    </ul>
+
       <h2>저장된 프롬프트</h2>
       <ul>
         <li>자주 묻는 질문</li>
