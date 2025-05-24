@@ -206,3 +206,23 @@ body {
 .sidebar.hidden {
   transform: translateX(-100%);
 }
+
+/* 사이드바 내부 링크 스타일 */
+.sidebar a {
+  display: block;
+  color: #333;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar a:hover {
+  background-color: #e0e0e0;
+}
+
+.sidebar a.active-team {
+  background-color: #6C63FF;
+  color: white;
+  font-weight: bold;
+}

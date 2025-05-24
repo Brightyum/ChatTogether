@@ -116,11 +116,35 @@ def logout():
     session.clear()
     return redirect(url_for("home"))
 
-# 질의응답 페이지 보여주기
+#질의응답 페이지 보여주기
 @app.route("/qa", methods=["GET"])
 def qa_page():
+    user_id = session.get("user_id")
     question = request.args.get("question", "")
-    return render_template("qa.html", question=question)
+    mode = request.args.get("mode", "personal")
+    team_id = request.args.get("team_id")
+
+     # 팀 목록: (더미 데이터, 추후 DB 연동 예정)
+    dummy_teams = [{"id": 1, "name": "팀 A (더미)"}, {"id": 2, "name": "팀 B (더미)"}]
+
+# 팀 모드 처리: team_id 유효성 확인
+    if mode == "team" and team_id:
+        try:
+            team_id = int(team_id)
+        except ValueError:
+            return "잘못된 팀 ID입니다.", 400
+
+        if not any(team["id"] == team_id for team in dummy_teams):
+            return "권한이 없는 팀입니다.", 403
+    else:
+        team_id = None  # 개인 모드일 때는 team_id 없음
+
+
+    return render_template("qa.html", question=question,
+        mode=mode,
+        team_id=team_id,
+        teams=dummy_teams  # 팀 목록 전달
+)
 
 
 # 질의응답
@@ -131,14 +155,27 @@ def stream_ask():
     question = data.get("question", "").strip()
 
     user_id = session.get("user_id")
+
+    mode = data.get("mode", "personal")
+
+    team_id = data.get("team_id")
+
     
     if not user_id:
-        return jsonify({"error": "로그인이 필요합니다"}), 401
-    
-    chat_system = ChatSystem(user_id=user_id)
+        return jsonify({"error": "로그인이 필요합니다"}), 401  
 
     if not question:
         return jsonify({"error": "질문칸을 채워주세요"}), 400
+    
+    # 팀 모드 처리: team_id 전달
+    if mode == "team" and team_id:
+        try:
+            team_id = int(team_id)
+        except ValueError:
+            return jsonify({"error": "잘못된 팀 ID입니다."}), 400
+        chat_system = ChatSystem(user_id=user_id, team_id=team_id)
+    else:
+        chat_system = ChatSystem(user_id=user_id)
 
     return Response(
         stream_with_context(chat_system.run(question)), content_type="text/plain"
