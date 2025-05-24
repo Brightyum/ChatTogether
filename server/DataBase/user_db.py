@@ -22,7 +22,7 @@ class UserDB:
             FROM Client_Table
             WHERE Client_ID = %s
         """
-        self.cursor.execute(sql, (client_id,))
+        self.cursor.execute(sql, (client_id))
         return self.cursor.fetchone()
 
     def update_user_info(self, client_id, name=None, email=None, phone=None, school=None, password=None, old=None, gender=None):

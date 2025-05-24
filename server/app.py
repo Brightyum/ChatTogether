@@ -19,7 +19,7 @@ from datetime import datetime
 import sys
 import os
 
-from server.DataBase.user_db import UserDB
+from DataBase.user_db import UserDB
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from RAG.LLM.chat_system import ChatSystem
@@ -28,7 +28,6 @@ app = Flask(__name__)
 
 app.secret_key = "your-secret-key"
 
-chat_system = ChatSystem()
 # 에러 추적 용이
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
@@ -96,8 +95,10 @@ def login():
                 user_id, user_pass
             )  # 사용자 로그인 정보가 데이터베이스에 존재하는지 검증하는 함수
 
-            if result is True:
+            if result:
                 session["user_id"] = user_id  # 사용자 아이디값 세션에 저장
+                session["user_name"] = result["user_name"]  # 이름 저장
+                flash(f"{result['user_name']}님 환영합니다.")
                 return render_template("index.html", username=user_id)
             elif result is False:
                 flash("아이디 또는 비밀번호가 일치하지 않습니다.")
@@ -109,6 +110,11 @@ def login():
             print(e)
     return render_template("login.html")
 
+# 로그아웃 페이지
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("home"))
 
 # 질의응답 페이지 보여주기
 @app.route("/qa", methods=["GET"])
@@ -124,6 +130,13 @@ def stream_ask():
 
     question = data.get("question", "").strip()
 
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
+    
+    chat_system = ChatSystem(user_id=user_id)
+
     if not question:
         return jsonify({"error": "질문칸을 채워주세요"}), 400
 
@@ -131,30 +144,32 @@ def stream_ask():
         stream_with_context(chat_system.run(question)), content_type="text/plain"
     )
 
-#  디비 저장 관련 추가 코드
-@app.route("/save_qa", methods=["POST"])
-def save_qa():
-    data = request.get_json()
-    question = data.get("question", "").strip()
-    response = data.get("response", "").strip()
+prompt_list = []
 
-    if not question or not response:
-        return jsonify({"error": "질문과 응답이 모두 필요합니다."}), 400
+# #  디비 저장 관련 추가 코드
+# @app.route("/save_qa", methods=["POST"])
+# def save_qa():
+#     data = request.get_json()
+#     question = data.get("question", "").strip()
+#     response = data.get("response", "").strip()
 
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "로그인이 필요합니다."}), 401
+#     if not question or not response:
+#         return jsonify({"error": "질문과 응답이 모두 필요합니다."}), 400
 
-    # 대화 요약: 지금은 임시로 질문 앞부분 사용
-    topic = question[:20] + "..." if len(question) > 20 else question
+#     user_id = session.get("user_id")
+#     if not user_id:
+#         return jsonify({"error": "로그인이 필요합니다."}), 401
 
-    qna = PersonalQnaExporter()
-    success = qna.save_to_db(user_id, question, response, topic_summary=topic)
+#     # 대화 요약: 지금은 임시로 질문 앞부분 사용
+#     topic = question[:20] + "..." if len(question) > 20 else question
 
-    if success:
-        return jsonify({"success": True})
-    else:
-        return jsonify({"error": "저장에 실패했습니다."}), 500
+#     qna = PersonalQnaExporter()
+#     success = qna.save_to_db(user_id, question, response, topic_summary=topic)
+
+#     if success:
+#         return jsonify({"success": True})
+#     else:
+#         return jsonify({"error": "저장에 실패했습니다."}), 500
 
 @app.route("/export_qna_json")
 def export_qna_json():
@@ -168,9 +183,6 @@ def export_qna_json():
         flash("JSON 저장 중 오류가 발생했습니다.")
         return redirect(url_for("qa_page"))
 
-
-
-prompt_list = []
 
 
 # 프롬프트 추가 페이지
@@ -203,6 +215,27 @@ def add_prompt():
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
 
+# 팀 생성 페이지
+@app.route("/create_team", methods=["GET", "POST"])
+def create_team():
+    if request.method == "POST":
+        team_name = request.form[
+            "team_name"
+        ]  # 테이블 만들고 그거에 따라서 이름 바꾸면 됨
+        team_desc = request.form["team_desc"]  # 얘도
+
+        # DB 처리 위임: 팀 생성 로직은 별도 클래스/파일에서 처리
+        prompt_db = UserPrompt()  # 이것도 변경해도 됨
+        success = prompt_db.create_team(team_name, team_desc)  # 변경 가능
+
+        if success:
+            flash(f"팀 '{team_name}'이(가) 성공적으로 생성되었습니다.")
+            return redirect(url_for("create_team"))
+        else:
+            flash("팀 생성 중 오류가 발생했습니다.")
+            return render_template("create_team.html")
+
+    return render_template("create_team.html")
 
 # 팀원 초대 페이지
 @app.route("/invite_member", methods=["GET", "POST"])
