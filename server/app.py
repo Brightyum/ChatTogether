@@ -183,31 +183,6 @@ def stream_ask():
 
 prompt_list = []
 
-# #  디비 저장 관련 추가 코드
-# @app.route("/save_qa", methods=["POST"])
-# def save_qa():
-#     data = request.get_json()
-#     question = data.get("question", "").strip()
-#     response = data.get("response", "").strip()
-
-#     if not question or not response:
-#         return jsonify({"error": "질문과 응답이 모두 필요합니다."}), 400
-
-#     user_id = session.get("user_id")
-#     if not user_id:
-#         return jsonify({"error": "로그인이 필요합니다."}), 401
-
-#     # 대화 요약: 지금은 임시로 질문 앞부분 사용
-#     topic = question[:20] + "..." if len(question) > 20 else question
-
-#     qna = PersonalQnaExporter()
-#     success = qna.save_to_db(user_id, question, response, topic_summary=topic)
-
-#     if success:
-#         return jsonify({"success": True})
-#     else:
-#         return jsonify({"error": "저장에 실패했습니다."}), 500
-
 @app.route("/export_qna_json")
 def export_qna_json():
     try:
