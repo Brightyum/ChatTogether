@@ -9,10 +9,13 @@ from flask import (
     Response,
     stream_with_context,
     session,
+    send_file,
 )
 from DataBase.Login_function import LoginFunction
 from DataBase.user_prompts_function import UserPrompt
 from DataBase.membership_function import MembershipFunction
+from DataBase.Personal_qna import PersonalQnaExporter
+from datetime import datetime
 import sys
 import os
 
@@ -125,6 +128,44 @@ def stream_ask():
         stream_with_context(chat_system.run(question)), content_type="text/plain"
     )
 
+#  디비 저장 관련 추가 코드
+@app.route("/save_qa", methods=["POST"])
+def save_qa():
+    data = request.get_json()
+    question = data.get("question", "").strip()
+    response = data.get("response", "").strip()
+
+    if not question or not response:
+        return jsonify({"error": "질문과 응답이 모두 필요합니다."}), 400
+
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "로그인이 필요합니다."}), 401
+
+    # 대화 요약: 지금은 임시로 질문 앞부분 사용
+    topic = question[:20] + "..." if len(question) > 20 else question
+
+    qna = PersonalQnaExporter()
+    success = qna.save_to_db(user_id, question, response, topic_summary=topic)
+
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "저장에 실패했습니다."}), 500
+
+@app.route("/export_qna_json")
+def export_qna_json():
+    try:
+        exporter = PersonalQnaExporter()
+        exporter.export_to_json()
+        flash("QnA 데이터를 JSON으로 성공적으로 저장했습니다.")
+        return redirect(url_for("qa_page"))
+    except Exception as e:
+        print("에러 발생:", e)
+        flash("JSON 저장 중 오류가 발생했습니다.")
+        return redirect(url_for("qa_page"))
+
+
 
 prompt_list = []
 
@@ -183,3 +224,5 @@ def pricing():
 # 서버 실행
 if __name__ == "__main__":
     app.run(port=5001)
+
+
