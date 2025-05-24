@@ -14,42 +14,26 @@
   <div class="container">
     <!-- 사이드바 -->
     <aside class="sidebar" id="sidebar">
-      <h2>팀 (더미)</h2>
-      <ul>
-        {% for team in teams %}
-        <li>
-          <a href="{{ url_for('qa_page') }}?mode=team&team_id={{ team.id }}"
-            {% if team.id == team_id %} class="active-team" {% endif %}>
-            {{ team.name }}
-          </a>
-        </li>
-      {% endfor %}
-      </ul>
-      <!--공통 네비-->
+      <!-- 팀 목록 -->
+    <h2>팀 목록</h2>
+    <ul>
+    {% for team in teams %}
+    <li>{{ team }}</li>
+    {% endfor %}
+    </ul>
+
       <h2>저장된 프롬프트</h2>
       <ul>
         <li>자주 묻는 질문</li>
         <li>보고서 템플릿</li>
         <li>코드 리뷰 지침</li>
       </ul>
-
-      <!-- 질문 목록 (mode에 따라 다르게 표시) -->
-      {% if mode == 'team' %}
       <h2>팀 질문 목록</h2>
       <ul>
-        <li>DB 구조 질문(팀)</li>
-        <li>API 설계 기준(팀)</li>
-        <li>배포 방식(팀)</li>
+        <li>DB 구조 질문</li>
+        <li>API 설계 기준</li>
+        <li>배포 방식</li>
       </ul>
-
-     {% else %}
-    <h2>개인 질문 목록</h2>
-      <ul>
-        <li>DB 구조 질문 (개인)</li>
-        <li>API 설계 기준 (개인)</li>
-        <li>배포 방식 (개인)</li>
-      </ul>
-     {% endif %}
     </aside>
 
     <!-- 메인 영역 -->

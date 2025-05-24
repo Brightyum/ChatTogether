@@ -16,6 +16,7 @@ from DataBase.user_prompts_function import UserPrompt
 from DataBase.membership_function import MembershipFunction
 from DataBase.Personal_qna import PersonalQnaExporter
 from datetime import datetime
+from DataBase.Create_Team import TeamCreator
 import sys
 import os
 
@@ -241,23 +242,39 @@ def add_prompt():
 @app.route("/create_team", methods=["GET", "POST"])
 def create_team():
     if request.method == "POST":
-        team_name = request.form[
-            "team_name"
-        ]  # 테이블 만들고 그거에 따라서 이름 바꾸면 됨
-        team_desc = request.form["team_desc"]  # 얘도
+        try:
+            team_name = request.form["team_name"]
+            team_desc = request.form["team_desc"]
 
-        # DB 처리 위임: 팀 생성 로직은 별도 클래스/파일에서 처리
-        prompt_db = UserPrompt()  # 이것도 변경해도 됨
-        success = prompt_db.create_team(team_name, team_desc)  # 변경 가능
+            created_by = session.get("user_id")
+            if not created_by:
+                flash("로그인이 필요합니다.")
+                return redirect(url_for("login"))
 
-        if success:
-            flash(f"팀 '{team_name}'이(가) 성공적으로 생성되었습니다.")
-            return redirect(url_for("create_team"))
-        else:
-            flash("팀 생성 중 오류가 발생했습니다.")
+            team_creator = TeamCreator()
+            success = team_creator.create_team(team_name, team_desc, created_by)
+
+            if success:
+                flash(f"팀 '{team_name}'이(가) 성공적으로 생성되었습니다.")
+                return redirect(url_for("qa_page"))
+            else:
+                flash("팀 생성 중 오류가 발생했습니다.")
+                return render_template("create_team.html")
+
+        except Exception as e:
+            print(f"팀 생성 중 에러 발생: {e}")
+            flash("서버 오류가 발생했습니다.")
             return render_template("create_team.html")
 
     return render_template("create_team.html")
+
+
+@app.route("/qa2")
+def qa_page_teams():
+    team_creator = TeamCreator()
+    team_list = team_creator.get_all_teams()  # DB에서 팀 목록 가져오기
+    return render_template("qa.html", teams=team_list)
+
 
 # 팀원 초대 페이지
 @app.route("/invite_member", methods=["GET", "POST"])
