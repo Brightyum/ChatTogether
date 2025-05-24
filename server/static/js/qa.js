@@ -19,13 +19,17 @@ function handleSubmit(event) {
   chatLog.appendChild(botEntry);
   chatLog.scrollTop = chatLog.scrollHeight;
 
+  // mode와 team_id는 서버에서 렌더링 시 주입 (Jinja2)
+  const mode = "{{ mode }}";
+  const teamId = "{{ team_id if team_id else '' }}";
+
   // 서버로 스트리밍 요청
   fetch("/stream-ask", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question: question }),
+    body: JSON.stringify({ question: question, mode: mode, team_id: teamId  }),
   })
     .then((response) => {
       const reader = response.body.getReader();
@@ -96,4 +100,3 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", handleSubmit);
   }
 });
-
