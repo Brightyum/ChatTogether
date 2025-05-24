@@ -9,7 +9,7 @@ from langchain_core.output_parsers import StrOutputParser
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
 
-MAX_MEMORY_LENGTH = 20
+MAX_MEMORY_LENGTH = 4
 
 
 
@@ -19,7 +19,7 @@ class ChatSystem:
         self.user_id = user_id
         self.memory = self.get_memory()
         self.chain = self.get_chain()
-
+        self.session_summary = None
 
     def get_prompt(self):
         user_prompt = UserPrompt()
@@ -99,10 +99,16 @@ class ChatSystem:
     def check_memory_limit(self):
         messages = self.memory.chat_memory.messages
         if len(messages) > MAX_MEMORY_LENGTH:
-            # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 20개)
-            self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
-            # 대화들 중 오래된 20개 요약
+            # 대화들 중 오래된 4개 요약
             summary = self.summarize_messages(messages[:-MAX_MEMORY_LENGTH])
+
+            # 최초의 요약만 session_summary에 저장장
+            if self.session_summary is None:
+                self.session_summary = summary
+            
+            # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 4개)
+            self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
+
             # 최신 대화는 메모리에 저장
             self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
             self.memory.chat_memory.add_user_message("[이전 대화 요약]")
@@ -126,6 +132,4 @@ class ChatSystem:
 
     def save_to_db(self, messages):
         db = UserQnaSave()
-        summary = self.summarize_messages(messages)
-        db.save_chat_messages(self.user_id, messages, summary)
-
+        db.save_chat_messages(self.user_id, messages, self.session_summary)
