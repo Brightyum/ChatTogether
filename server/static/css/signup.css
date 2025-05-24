@@ -46,6 +46,24 @@ body {
   transition: border-color 0.2s;
 }
 
+.form-container input[type="tel"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+
 .form-container input:focus {
   border-color: #6c63ff;
   outline: none;

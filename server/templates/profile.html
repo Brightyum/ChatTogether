@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>내 정보 | ETA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+</head>
+<body>
+    <div class="profile-container">
+        <h2>내 정보</h2>
+
+        <!-- flash 메시지 표시 -->
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flash-messages">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/update_profile">
+            <label>아이디 (수정 불가)</label>
+            <input type="text" name="client_id" value="{{ user[0] }}" readonly>
+
+            <label>이름</label>
+            <input type="text" name="name" value="{{ user[1] }}" required>
+
+            <label>비밀번호</label>
+            <input type="password" name="password" placeholder="변경 시에만 입력">
+
+            <label>나이</label>
+            <input type="number" name="client_old" value="{{ user[3] }}" required>
+
+            <label>성별</label>
+            <select name="client_gender" required>
+                <option value="male" {% if user[3] == 'male' %}selected{% endif %}>남성</option>
+                <option value="female" {% if user[3] == 'female' %}selected{% endif %}>여성</option>
+            </select>
+
+            <label>이메일</label>
+            <input type="email" name="email" value="{{ user[5] }}" required>
+
+            <label>전화번호</label>
+            <input type="text" name="phone" value="{{ user[6] }}" placeholder="01012345678" required>
+
+            <label>학교</label>
+            <input type="text" name="school" value="{{ user[7] }}" required>
+
+            <button type="submit">정보 수정</button>
+        </form>
+
+        <p class="back-link"><a href="{{ url_for('mypage') }}">← 마이 페이지로 돌아가기</a></p>
+    </div>
+</body>
+</html>
