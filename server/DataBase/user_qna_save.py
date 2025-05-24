@@ -3,7 +3,7 @@ from .db import Db
 
 class UserQnaSave:
     def __init__(self):
-        self.db = Db.getDb()
+        self.db = Db().getDb()
 
     def save_chat_messages(self, user_id, question, answer, summary):
         try:
@@ -33,9 +33,10 @@ class UserQnaSave:
                         ai_msg = ""
                     
                     sql = """
-                        INSERT INTO Personal_Table (Client_ID, conversation_id, Personal_Asw, Personal_Rsp)
+                        INSERT INTO Personal_Table (Client_ID, conversation_id, Personal_Rsp, Personal_Asw)
                         VALUES (%s, %s, %s, %s)
                     """
+                    print(f"저장 예정: 질문={user_msg}, 답변={ai_msg}")
                     cursor.execute(sql, (user_id, summary, user_msg, ai_msg))
 
             self.db.commit()

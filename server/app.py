@@ -26,6 +26,9 @@ from RAG.LLM.chat_system import ChatSystem
 
 app = Flask(__name__)
 
+# 챗시스템 객체 생성
+chat_systems = {}
+
 app.secret_key = "your-secret-key"
 
 # 에러 추적 용이
@@ -173,10 +176,17 @@ def stream_ask():
             team_id = int(team_id)
         except ValueError:
             return jsonify({"error": "잘못된 팀 ID입니다."}), 400
-        chat_system = ChatSystem(user_id=user_id, team_id=team_id)
+    
+    if team_id:
+        key = f"{user_id}_{team_id}"
     else:
-        chat_system = ChatSystem(user_id=user_id)
+        key = user_id
+    
+    if key not in chat_systems:
+        chat_systems[key] = ChatSystem(user_id=user_id, team_id=team_id)
 
+    chat_system = chat_systems[key]
+    
     return Response(
         stream_with_context(chat_system.run(question)), content_type="text/plain"
     )

@@ -96,7 +96,10 @@ class ChatSystem:
             if self.session_summary is not None:
                 self.save_to_db(self.user_id, question, final_answer, self.session_summary)
 
+            self.check_memory_limit()
+
             return final_answer
+        
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
 
@@ -105,13 +108,13 @@ class ChatSystem:
         messages = self.memory.chat_memory.messages
         if len(messages) > MAX_MEMORY_LENGTH:
             # 대화들 중 오래된 4개 요약
-            summary = self.summarize_messages(messages[:-MAX_MEMORY_LENGTH])
+            summary = self.summarize_messages(messages)
 
-            # 최초의 요약만 session_summary에 저장장
+            # 최초의 요약만 session_summary에 저장
             if self.session_summary is None:
                 self.session_summary = summary
                 db = self.get_db()
-                db.save_history_chat_messages(self.user_id, messages[:-MAX_MEMORY_LENGTH], self.session_summary)
+                db.save_history_chat_messages(self.user_id, messages, self.session_summary)
             
             # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 4개)
             #self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
@@ -139,7 +142,7 @@ class ChatSystem:
 
     def save_to_db(self, user_id, question, final_answer, session_summary ):
         db = self.get_db()
-        db.save_chat_message(user_id, question, final_answer, session_summary)
+        db.save_chat_messages(user_id, question, final_answer, session_summary)
     
     def get_db(self):
         db = UserQnaSave()

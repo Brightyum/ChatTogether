@@ -34,26 +34,15 @@ function handleSubmit(event) {
     .then((response) => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = "";
-
+      
       function readChunk() {
-      reader.read().then(({ done, value }) => {
-        if (done) {
-          // ✅ 모든 응답을 받은 뒤 서버에 질문/응답 저장
-          fetch("/save_qa", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question: question, response: fullResponse }),
-          });
-          return;
-        }
-
-        const chunk = decoder.decode(value, { stream: true });
-        fullResponse += chunk;  // 전체 응답 누적
-        streamSpan.textContent += chunk;
-        chatLog.scrollTop = chatLog.scrollHeight;
-        readChunk();
-      });
+        reader.read().then(({ done, value }) => {
+          if (done) return;
+          const chunk = decoder.decode(value, { stream: true });
+          streamSpan.textContent += chunk;
+          chatLog.scrollTop = chatLog.scrollHeight;
+          readChunk();
+        });
       }
 
       readChunk();
