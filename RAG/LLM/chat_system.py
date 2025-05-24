@@ -14,12 +14,13 @@ MAX_MEMORY_LENGTH = 4
 
 
 class ChatSystem:
-    def __init__(self, user_id=None):
+    def __init__(self, user_id=None, team_id=None):
         load_dotenv()
         self.user_id = user_id
         self.memory = self.get_memory()
         self.chain = self.get_chain()
         self.session_summary = None
+        self.team_id = team_id
 
     def get_prompt(self):
         user_prompt = UserPrompt()
@@ -91,6 +92,10 @@ class ChatSystem:
                 yield content
 
             self.memory.save_context({"inputs": question}, {"output": final_answer})
+
+            if self.session_summary is not None:
+                self.save_to_db(self.user_id, question, final_answer, self.session_summary)
+
             return final_answer
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
@@ -105,9 +110,11 @@ class ChatSystem:
             # 최초의 요약만 session_summary에 저장장
             if self.session_summary is None:
                 self.session_summary = summary
+                db = self.get_db()
+                db.save_history_chat_messages(self.user_id, messages[:-MAX_MEMORY_LENGTH], self.session_summary)
             
             # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 4개)
-            self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
+            #self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
 
             # 최신 대화는 메모리에 저장
             self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
@@ -130,6 +137,10 @@ class ChatSystem:
         chain = summary_prompt | self.get_llm() | StrOutputParser()
         return chain.invoke({})
 
-    def save_to_db(self, messages):
+    def save_to_db(self, user_id, question, final_answer, session_summary ):
+        db = self.get_db()
+        db.save_chat_message(user_id, question, final_answer, session_summary)
+    
+    def get_db(self):
         db = UserQnaSave()
-        db.save_chat_messages(self.user_id, messages, self.session_summary)
+        return db
