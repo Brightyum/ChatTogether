@@ -21,12 +21,12 @@
   {% endwith %}
 
   <form method="POST">
-    <label for="team">팀 선택</label>
-    <select name="team" id="team" required>
-      {% for team in team_list %}
-        <option value="{{ team }}">{{ team }}</option>
-      {% endfor %}
-    </select>
+      <label for="team">팀 선택</label>
+  <select name="team" id="team" required>
+    {% for team in team_list %}
+      <option value="{{ team.id }}">{{ team.name }}</option>
+    {% endfor %}
+  </select>
 
     <label for="email">이메일</label>
     <input type="email" name="email" id="email" required>
