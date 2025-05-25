@@ -18,12 +18,27 @@ class UserDB:
     def get_user_info(self, client_id):
         sql = """
             SELECT Client_ID, Client_Name, Client_Pass, Client_Old, Client_Gen,
-            Client_Eml, Client_Num, Client_Sch
+            Client_Eml, Client_Num, Client_Sch, Client_plan
             FROM Client_Table
             WHERE Client_ID = %s
         """
         self.cursor.execute(sql, (client_id))
         return self.cursor.fetchone()
+    
+        if result:
+                return {
+                    "user_id": result[0],
+                    "name": result[1],
+                    "password": result[2],
+                    "old": result[3],
+                    "gender": result[4],
+                    "email": result[5],
+                    "phone": result[6],
+                    "school": result[7],
+                    "plan": result[8],
+                } 
+        return None
+
 
     def update_user_info(self, client_id, name=None, email=None, phone=None, school=None, password=None, old=None, gender=None):
         updates = []
@@ -67,3 +82,11 @@ class UserDB:
     def __del__(self):
         self.cursor.close()
         self.conn.close()
+
+    #요금제 업데이트
+    def update_user_plan(self, client_id, plan):
+        sql = "UPDATE Client_Table SET Client_Plan = %s WHERE Client_ID = %s"
+        self.cursor.execute(sql, (plan, client_id))
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+

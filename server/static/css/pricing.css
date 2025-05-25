@@ -74,3 +74,26 @@ body {
 .card ul li {
   margin-bottom: 10px;
 }
+
+/* 기존 edit-btn */
+.edit-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  background-color: #6c63ff;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  margin-top: 50px;
+}
+
+.edit-btn:hover {
+  background-color: #7e74ff;
+}
+
+/* 버튼 비활성화 상태 */
+.edit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
