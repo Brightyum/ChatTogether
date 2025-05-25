@@ -8,7 +8,8 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
-from vectorstore import VectorStore
+# from vectorstore import VectorStore
+from RAG.vectorstore import VectorStore
 
 MAX_MEMORY_LENGTH = 4
 

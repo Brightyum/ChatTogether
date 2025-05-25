@@ -1,5 +1,5 @@
-from embedding import Embedding
-from split import Split
+from RAG.embedding import Embedding
+from RAG.split import Split
 from langchain_community.vectorstores import FAISS
 import os
 

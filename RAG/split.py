@@ -1,5 +1,5 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from load import Load
+from RAG.load import Load
 
 class Split:
     def __init__(self, chunk_size=250, chunk_overlap=50):

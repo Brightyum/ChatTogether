@@ -55,11 +55,21 @@ class TeamCreator:
             conn = self.connect_db()
             cursor = conn.cursor()
             team_id = self.get_next_team_id()
+
+            #Team_Create Table에 저장
             sql = """
                 INSERT INTO TeamCreate_Table (Team_ID, Team_Name, Team_Description, Created_At, Created_By)
                 VALUES (%s, %s, %s, NOW(), %s)
             """
             cursor.execute(sql, (team_id, team_name, team_desc, created_by))
+
+            #Team_Table에 생성자 등록
+            sql2 = """
+            INSERT INTO Team_Table (Team_ID, ClientID_fir, ClientType_fir)
+            VALUES (%s, %s, %s)
+             """
+            cursor.execute(sql2, (team_id, created_by, '관리자'))
+
             conn.commit()
             cursor.close()
             conn.close()
@@ -72,12 +82,47 @@ class TeamCreator:
         try:
             conn = self.connect_db()
             cursor = conn.cursor()
-            sql = "SELECT Team_ID AS id, Team_Name AS name FROM TeamCreate_Table WHERE Created_By = %s"
+            sql = """
+                SELECT t.Team_ID, c.Team_Name, c.Team_Description, 
+                    CASE 
+                        WHEN t.ClientID_fir = %s THEN t.ClientType_fir
+                        WHEN t.ClientID_sec = %s THEN t.ClientType_sec
+                        WHEN t.ClientID_thr = %s THEN t.ClientType_thr
+                        WHEN t.ClientID_fou = %s THEN t.ClientType_fou
+                        WHEN t.ClientID_fiv = %s THEN t.ClientType_fiv
+                        WHEN t.ClientID_six = %s THEN t.ClientType_six
+                        ELSE '생성자'
+                    END AS Role
+                FROM Team_Table t
+                JOIN TeamCreate_Table c ON t.Team_ID = c.Team_ID
+                WHERE %s IN (t.ClientID_fir, t.ClientID_sec, t.ClientID_thr, t.ClientID_fou, t.ClientID_fiv, t.ClientID_six)
+                OR c.Created_By = %s
+            """
+            params = (user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id)
+            cursor.execute(sql, params)
+            results = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            return results
+        except Exception as e:
+            print("❌ 사용자 팀 목록 조회 오류:", e)
+            return []
+    
+    def get_my_created_teams(self, user_id):
+        try:
+            conn = self.connect_db()
+            cursor = conn.cursor()
+            sql = """
+                SELECT Team_ID AS id, Team_Name AS name
+                FROM TeamCreate_Table
+                WHERE Created_By = %s
+            """
             cursor.execute(sql, (user_id,))
             results = cursor.fetchall()
             cursor.close()
             conn.close()
             return results
         except Exception as e:
-            print("❌ 사용자별 팀 목록 불러오기 오류:", e)
+            print("❌ 내가 만든 팀 목록 조회 오류:", e)
             return []
+
