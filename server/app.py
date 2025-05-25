@@ -14,7 +14,7 @@ from flask import (
 from DataBase.Login_function import LoginFunction
 from DataBase.user_prompts_function import UserPrompt
 from DataBase.membership_function import MembershipFunction
-from DataBase.Personal_qna import PersonalQnaExporter
+from DataBase.TeamQnaExporter import TeamQnaExporter
 from datetime import datetime
 from DataBase.Create_Team import TeamCreator
 from DataBase.Invite_team import TeamInvite
@@ -207,7 +207,18 @@ prompt_list = []
 @app.route("/export_qna_json")
 def export_qna_json():
     try:
-        exporter = PersonalQnaExporter()
+        user_id = session.get("user_id")
+        team_id = request.args.get("team_id", None)  # GET 파라미터에서 team_id를 받음
+        if team_id:
+            team_id = int(team_id)  # 문자열 -> 정수
+
+        if not user_id:
+            flash("로그인이 필요합니다.")
+            return redirect(url_for("login"))
+
+        print(f"user_id: {user_id}, team_id: {team_id}")
+
+        exporter = TeamQnaExporter(user_id, team_id)
         exporter.export_to_json()
         flash("QnA 데이터를 JSON으로 성공적으로 저장했습니다.")
         return redirect(url_for("qa_page"))
