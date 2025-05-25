@@ -44,13 +44,13 @@
     jsonpatch==1.33
     jsonpointer==3.0.0
     kubernetes==31.0.0
-    langchain==0.3.0
+    langchain==0.3.25
     langchain-chroma==0.1.4
-    langchain-community==0.3.0
-    langchain-core>=0.3.8
+    langchain-community==0.3.24
+    langchain-core==0.3.61
     langchain-huggingface==0.1.0
-    langchain-openai==0.2.14
-    langchain-text-splitters==0.3.0
+    langchain-openai==0.3.18
+    langchain-text-splitters==0.3.8
     langsmith==0.1.130
     markdown-it-py==3.0.0
     marshmallow==3.22.0
@@ -64,7 +64,7 @@
     numpy==1.26.4
     oauthlib==3.2.2
     onnxruntime==1.19.2
-    openai==1.59.3
+    openai==1.68.2
     opentelemetry-api==1.27.0
     opentelemetry-exporter-otlp-proto-common==1.27.0
     opentelemetry-exporter-otlp-proto-grpc==1.27.0

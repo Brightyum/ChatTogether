@@ -8,7 +8,6 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
-# from vectorstore import VectorStore
 from RAG.vectorstore import VectorStore
 
 MAX_MEMORY_LENGTH = 4
@@ -19,17 +18,17 @@ class ChatSystem:
     def __init__(self, user_id=None, team_id=None):
         load_dotenv()
         self.user_id = user_id
-        self.memory = self.get_memory()
-        self.chain = self.get_chain()
-        self.session_summary = None
         self.team_id = team_id
+        self.memory = self.get_memory()
+        #self.chain = self.get_chain()
+        self.session_summary = None
         self.vectorstore = VectorStore()
-        self.load_vectorstore = self.vectorstore.load_vectorstore(team_id=self.team_id)
+        self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id=self.team_id)
     
     def search_vectorstore(self, query: str, k=3) -> list:
         embedding_model = self.vectorstore.embedding.get_embedding_model()
         query_vector = embedding_model.embed_query(query)
-        result = self.load_vectorstore.similarity_search_by_vector(query_vector, k=k)
+        result = self.vectorstore_obj.similarity_search_by_vector(query_vector, k=k)
 
         return result
      
@@ -135,6 +134,9 @@ class ChatSystem:
             if self.session_summary is not None:
                 self.save_to_db(self.user_id, question, final_answer, self.session_summary)
 
+                if self.team_id is not None:
+                    self.save_team_qna_to_db(self.user_id, self.team_id, question, final_answer, self.session_summary)
+
             self.check_memory_limit()
 
             return final_answer
@@ -154,7 +156,7 @@ class ChatSystem:
                 self.session_summary = summary
                 db = self.get_db()
                 db.save_history_chat_messages(self.user_id, messages, self.session_summary)
-
+                db.save_history_team_chat_messages(self.user_id, self.team_id, messages, self.session_summary)
             # 최신 대화는 메모리에 저장
             self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
             self.memory.chat_memory.add_user_message("[이전 대화 요약]")
@@ -175,6 +177,11 @@ class ChatSystem:
         )
         chain = summary_prompt | self.get_llm() | StrOutputParser()
         return chain.invoke({})
+#self.save_team_qna_to_db(self.user_id, self.team_id, question, final_answer, self.session_summary)
+
+    def save_team_qna_to_db(self, user_id, team_id, question, final_answer, session_summary):
+        db = self.get_db()
+        db.save_team_chat_messages(user_id, team_id, question, final_answer, session_summary)
 
     def save_to_db(self, user_id, question, final_answer, session_summary ):
         db = self.get_db()
