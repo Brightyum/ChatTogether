@@ -41,14 +41,8 @@
         </ul>
       </div>
     </div>
+    <button id="confirmPlan" class = "edit-btn" disabled>요금제 선택 완료</button>
   </div>
-
-  <script>
-    function selectPlan(selectedCard) {
-      const cards = document.querySelectorAll('.card');
-      cards.forEach(card => card.classList.remove('selected'));
-      selectedCard.classList.add('selected');
-    }
-  </script>
+<script src="{{ url_for('static', filename='js/pricing.js') }}"></script>
 </body>
 </html>

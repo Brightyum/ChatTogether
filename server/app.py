@@ -448,6 +448,31 @@ def delete_team():
 
     return redirect(url_for("mypage"))
 
+#요금제 저장
+@app.route("/select_plan", methods=["POST"])
+def select_plan():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
+    data = request.get_json()
+    plan = data.get("plan")
+
+    if not plan:
+        return jsonify({"success": False, "message": "요금제 정보가 없습니다."}), 400
+
+    user_id = session["user_id"]
+
+    # DB에 요금제 저장
+    db = UserDB()
+    success = db.update_user_plan(user_id, plan)
+
+    if success:
+        session["plan"] = plan  # 선택 사항: 세션에 저장 (임시 캐시)
+        return jsonify({"success": True, "message": "요금제가 저장되었습니다."})
+    else:
+        return jsonify({"success": False, "message": "DB 저장 실패"}), 500
+
+
 
 # 서버 실행
 if __name__ == "__main__":

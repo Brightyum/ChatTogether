@@ -43,10 +43,12 @@
             <li><strong>이메일:</strong> {{ user[5] }}</li>
             <li><strong>전화번호:</strong> {{ user[6] }}</li>
             <li><strong>학교:</strong> {{ user[7] }}</li>
+            <li><strong>선택한 요금제:</strong> {{ user[8] if user[8] else "아직 선택 안 함" }}
         </ul>
         
 
         <a href="{{ url_for('profile') }}" class="edit-btn">정보 수정하기</a>
+        <a href="{{ url_for('pricing') }}" class="edit-btn" style="margin-top: 15px;">요금제 변경하기</a>
     </div>
     <div class="team-section">
   <h2>내 팀 목록</h2>
