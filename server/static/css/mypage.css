@@ -2,77 +2,17 @@
 body {
   background: linear-gradient(to right, #f5f7fa, #c3cfe2);
   font-family: 'Segoe UI', sans-serif;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
   margin: 0;
 }
 
-/* 마이페이지 컨테이너 */
-.mypage-container {
-  margin: 100px auto 40px; /* 위 여백 확보 + 좌우 중앙 정렬 */
-  background-color: white;
-  padding: 40px 30px;
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 450px;
-  text-align: center;
-}
-
-/* 제목 */
-.mypage-container h2 {
-  margin-bottom: 24px;
-  color: #333;
-  font-size: 1.8rem;
-}
-
-/* 사용자 정보 리스트 */
-.user-info-list {
-  list-style-type: none;
-  padding: 0;
-  text-align: left;
-  margin-bottom: 30px;
-}
-
-.user-info-list li {
-  margin-bottom: 12px;
-  font-size: 1rem;
-  color: #444;
-}
-
-.user-info-list strong {
-  font-weight: bold;
-  display: inline-block;
-  width: 120px;
-  color: #222;
-}
-
-/* 정보 수정 버튼 */
-.edit-btn {
-  display: inline-block;
-  padding: 12px 20px;
-  background-color: #6c63ff;
-  color: white;
-  text-decoration: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.edit-btn:hover {
-  background-color: #7e74ff;
-}
-
-
+/* 네비게이션 바 */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 48px;
-  z-index: 10;
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 경계 구분 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .nav-left {
@@ -111,7 +51,6 @@ body {
   align-items: center;
   gap: 4px;
   font-size: 1rem;
-  position: relative;
 }
 
 .menu a:hover {
@@ -128,12 +67,6 @@ body {
   gap: 20px;
 }
 
-.nav-right .login {
-  text-decoration: none;
-  font-weight: 500;
-  color: #555;
-}
-
 .cta {
   background-color: #6C63FF;
   color: #ffffff;
@@ -141,4 +74,135 @@ body {
   border-radius: 20px;
   font-weight: bold;
   text-decoration: none;
+}
+
+/* 마이페이지 컨테이너 */
+.mypage-container {
+  margin: 100px auto 40px;
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.mypage-container h2 {
+  margin-bottom: 24px;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.user-info-list {
+  list-style-type: none;
+  padding: 0;
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.user-info-list li {
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #444;
+}
+
+.user-info-list strong {
+  font-weight: bold;
+  display: inline-block;
+  width: 120px;
+  color: #222;
+}
+
+/* 정보 수정 버튼 */
+.edit-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  background-color: #6c63ff;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.edit-btn:hover {
+  background-color: #7e74ff;
+}
+
+/* 팀 목록 섹션 */
+.team-section {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.team-section h2 {
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
+}
+
+/* 팀 카드 목록 */
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.team-list li {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  position: relative;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.team-list li strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.team-list li p {
+  margin: 4px 0;
+}
+
+.team-list li form {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.team-list li button {
+  background: #ff5c5c;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.team-list li button:hover {
+  background: #ff7676;
+}
+
+/* 반응형 */
+@media (max-width: 600px) {
+  .mypage-container {
+    margin: 60px 20px 30px;
+    padding: 30px 20px;
+  }
+
+  .team-section {
+    padding: 0 15px;
+  }
 }

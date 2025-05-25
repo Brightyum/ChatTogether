@@ -19,9 +19,9 @@
     <ul>
     {% for team in teams %}
         <li>
-          <a href="{{ url_for('qa_page') }}?mode=team&team_id={{ team.id }}"
-            {% if team.id == team_id %} class="active-team" {% endif %}>
-            {{ team.name }}
+          <a href="{{ url_for('qa_page') }}?mode=team&team_id={{ team.Team_ID }}"
+            {% if team.Team_ID == team_id %} class="active-team" {% endif %}>
+            {{ team.Team_Name }}
           </a>
         </li>
       {% endfor %}

@@ -20,7 +20,7 @@ class ChatSystem:
         self.user_id = user_id
         self.team_id = team_id
         self.memory = self.get_memory()
-        self.chain = self.get_chain()
+        #self.chain = self.get_chain()
         self.session_summary = None
         self.vectorstore = VectorStore()
         self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id=self.team_id)

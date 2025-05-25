@@ -43,12 +43,33 @@
             <li><strong>이메일:</strong> {{ user[5] }}</li>
             <li><strong>전화번호:</strong> {{ user[6] }}</li>
             <li><strong>학교:</strong> {{ user[7] }}</li>
-            <!-- 팀 정보 추후 확장 -->
         </ul>
         
 
         <a href="{{ url_for('profile') }}" class="edit-btn">정보 수정하기</a>
     </div>
+    <div class="team-section">
+  <h2>내 팀 목록</h2>
+
+  {% if teams %}
+    <ul class="team-list">
+      {% for team in teams | selectattr("Team_Name", "ne", none) | list %}
+        <li>
+          <strong>팀 이름:</strong> {{ team.Team_Name }} <br>
+          <strong>팀 설명:</strong> {{ team.Team_Description }} <br>
+          <strong>내 역할:</strong> {{ team.Role }}
+          <form method="POST" action="/leave_team" style="display:inline;">
+            <input type="hidden" name="team_id" value="{{ team.Team_ID }}">
+            <button type="submit">팀 나가기</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>참여 중인 팀이 없습니다.</p>
+  {% endif %}
+</div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script> 
 </body>
 </html>

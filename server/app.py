@@ -17,6 +17,7 @@ from DataBase.membership_function import MembershipFunction
 from DataBase.Personal_qna import PersonalQnaExporter
 from datetime import datetime
 from DataBase.Create_Team import TeamCreator
+from DataBase.Invite_team import TeamInvite
 import sys
 import os
 
@@ -143,7 +144,7 @@ def qa_page():
         except ValueError:
             return "잘못된 팀 ID입니다.", 400
 
-        if not any(team["id"] == team_id for team in user_teams):
+        if not any(team["Team_ID"] == team_id for team in user_teams):
             return "권한이 없는 팀입니다.", 403
     else:
         team_id = None  # 개인 모드일 때는 team_id 없음
@@ -284,14 +285,31 @@ def qa_page_teams():
 # 팀원 초대 페이지
 @app.route("/invite_member", methods=["GET", "POST"])
 def invite_member():
-    team_list = ["팀 A", "팀 B", "팀 C"]  # 실제 프로젝트에선 DB에서 불러오기
+    if "user_id" not in session:
+        flash("로그인이 필요합니다.")
+        return redirect(url_for("login"))
+     
+    user_id = session["user_id"]
+    team_creator = TeamCreator()
+    team_list = team_creator.get_my_created_teams(user_id)  # 내가 만든 팀 목록만 불러오기
+
+
     if request.method == "POST":
-        team = request.form["team"]
+        team_id = request.form["team"]
         email = request.form["email"]
         role = request.form["role"]
-        # TODO: 초대 처리 및 DB 연동
-        flash(f"{email} 님을 {team} 팀에 {role} 권한으로 초대했습니다.")
+
+        #초대처리
+        team_invite = TeamInvite()
+        success = team_invite.invite_member(team_id, email, role)
+        
+        if success:
+            flash(f"{email} 님을 팀에 초대했습니다.")
+        else:
+            flash("초대 처리 중 오류가 발생했습니다.")
+
         return redirect(url_for("invite_member"))
+    
     return render_template("invite_member.html", team_list=team_list)
 
 
@@ -352,11 +370,49 @@ def update_profile():
 def mypage():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    
+    user_id = session["user_id"]  
 
     db = UserDB()
     user = db.get_user_info(session["user_id"])
-    return render_template("mypage.html", user=user)
+     
+    #팀 정보 가져오기
+    team_invite = TeamInvite()
+    invited_teams = team_invite.get_user_teams(user_id)  # 초대받은 팀 목록
 
+    team_creator = TeamCreator()
+    created_teams = team_creator.get_my_created_teams(user_id)  # 생성한 팀 목록
+
+    # 생성한 팀 데이터를 초대받은 팀과 형식 맞추기
+    for team in created_teams:
+        team["Role"] = "생성자"
+
+    # 합치기
+    teams = invited_teams + created_teams
+
+    # 'Team_Name'이 존재하는 팀만 필터링
+    teams = [team for team in teams if team.get("Team_Name")]
+
+    return render_template("mypage.html", user=user, teams=teams)
+
+#마이페이지 - 팀나가기
+@app.route("/leave_team", methods=["POST"])
+def leave_team():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    team_id = request.form["team_id"]
+
+    team_invite = TeamInvite()
+    success = team_invite.leave_team(user_id, team_id)
+
+    if success:
+        flash("팀에서 나갔습니다.")
+    else:
+        flash("팀 나가기 중 오류가 발생했습니다.")
+
+    return redirect(url_for("mypage"))
 
 
 
