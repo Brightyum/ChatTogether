@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
+from vectorstore import VectorStore
 
 MAX_MEMORY_LENGTH = 4
 
@@ -21,8 +22,17 @@ class ChatSystem:
         self.chain = self.get_chain()
         self.session_summary = None
         self.team_id = team_id
+        self.vectorstore = VectorStore()
+        self.load_vectorstore = self.vectorstore.load_vectorstore(team_id=self.team_id)
+    
+    def search_vectorstore(self, query: str, k=3) -> list:
+        embedding_model = self.vectorstore.embedding.get_embedding_model()
+        query_vector = embedding_model.embed_query(query)
+        result = self.load_vectorstore.similarity_search_by_vector(query_vector, k=k)
 
-    def get_prompt(self):
+        return result
+     
+    def get_prompt(self, retrieved_docs=None):
         user_prompt = UserPrompt()
         prompt_list = user_prompt.getPrompt(self.user_id)
 
@@ -36,9 +46,18 @@ class ChatSystem:
                 messages.append(
                     (
                         "system",
-                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
+                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}"
                     )
                 )
+
+        if retrieved_docs:
+            context = ""
+            for doc in retrieved_docs:
+                context += f"문서: {doc.page_content}\n\n"
+            
+            system_message = f"다음은 참고할 문서입니다:\n{context}"
+            
+            messages.append(("system", system_message))
 
         messages.append(("human", "#Question: {question}"))
 
@@ -71,19 +90,38 @@ class ChatSystem:
         )
         return runnable
 
-    def get_chain(self):
-        runnable = self.get_runnable()
-        prompt = self.get_prompt()
-        llm = self.get_llm()
+    def get_chain(self, retrieved_docs=None):
+        if self.team_id is not None and retrieved_docs:
+            prompt = self.get_prompt(retrieved_docs)
+            runnable = self.get_runnable()
+            llm = self.get_llm()
 
-        chain = runnable | prompt | llm
-        return chain
+            team_chain = runnable | prompt | llm
+            return team_chain
+        else:
+            runnable = self.get_runnable()
+            prompt = self.get_prompt()
+            llm = self.get_llm()
 
-    def run(self, question: str):
+            chain = runnable | prompt | llm
+            return chain
+
+    def run(self, question: str): 
 
         final_answer = ""
         try:
-            response = self.chain.stream({"question": question})
+            # team_id가 있는 경우 RAG시스템 수행
+            retrieved_docs = []
+            if self.team_id is not None:
+                retrieved_docs = self.search_vectorstore(question)
+                if retrieved_docs:
+                    print(f"team_id: {self.team_id}, {len(retrieved_docs)}개 문서 검색됨")
+                else:
+                    print(f"유사 문서가 없어 기본 프롬프트를 사용하겠습니다.")
+            
+            chain = self.get_chain(retrieved_docs)
+            
+            response = chain.stream({"question": question})
 
             for token in response:
                 print(token.content, end="", flush=True)
@@ -115,9 +153,6 @@ class ChatSystem:
                 self.session_summary = summary
                 db = self.get_db()
                 db.save_history_chat_messages(self.user_id, messages, self.session_summary)
-            
-            # 대화 내용을 데이터베이스에 저장(대화들 중 오래된 4개)
-            #self.save_to_db(messages[:-MAX_MEMORY_LENGTH])
 
             # 최신 대화는 메모리에 저장
             self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]

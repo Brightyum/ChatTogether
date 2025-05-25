@@ -25,6 +25,13 @@ class VectorStore:
             return True
         
         return False
+    
+    # team_id를 받아 team_id의 문서를 할당해주는 코드로 개선선
+    def load_vectorstore(self, team_id=None):
+        return FAISS.load_local(
+            folder_path=self.VECTORSTORE_PATH,
+            embeddings=self.embedding.get_embedding_model()
+        )
 
     def set_vectorstore(self):
         existing_hash = self.embedding.get_hash_registry()
