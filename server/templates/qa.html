@@ -18,8 +18,13 @@
     <h2>팀 목록</h2>
     <ul>
     {% for team in teams %}
-    <li>{{ team }}</li>
-    {% endfor %}
+        <li>
+          <a href="{{ url_for('qa_page') }}?mode=team&team_id={{ team.id }}"
+            {% if team.id == team_id %} class="active-team" {% endif %}>
+            {{ team.name }}
+          </a>
+        </li>
+      {% endfor %}
     </ul>
 
       <h2>저장된 프롬프트</h2>

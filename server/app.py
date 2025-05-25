@@ -128,8 +128,13 @@ def qa_page():
     mode = request.args.get("mode", "personal")
     team_id = request.args.get("team_id")
 
-     # 팀 목록: (더미 데이터, 추후 DB 연동 예정)
-    dummy_teams = [{"id": 1, "name": "팀 A (더미)"}, {"id": 2, "name": "팀 B (더미)"}]
+    if not user_id:
+        flash("로그인이 필요합니다.")
+        return redirect(url_for("login"))
+
+    team_creator = TeamCreator()
+    user_teams = team_creator.get_user_teams(user_id)
+
 
 # 팀 모드 처리: team_id 유효성 확인
     if mode == "team" and team_id:
@@ -138,7 +143,7 @@ def qa_page():
         except ValueError:
             return "잘못된 팀 ID입니다.", 400
 
-        if not any(team["id"] == team_id for team in dummy_teams):
+        if not any(team["id"] == team_id for team in user_teams):
             return "권한이 없는 팀입니다.", 403
     else:
         team_id = None  # 개인 모드일 때는 team_id 없음
@@ -147,7 +152,7 @@ def qa_page():
     return render_template("qa.html", question=question,
         mode=mode,
         team_id=team_id,
-        teams=dummy_teams  # 팀 목록 전달
+        teams=user_teams  # 팀 목록 전달
 )
 
 

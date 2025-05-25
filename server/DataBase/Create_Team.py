@@ -68,15 +68,16 @@ class TeamCreator:
             print("❌ 팀 생성 중 오류:", e)
             return False
 
-    def get_all_teams(self):
+    def get_user_teams(self, user_id):
         try:
             conn = self.connect_db()
             cursor = conn.cursor()
-            cursor.execute("SELECT Team_Name FROM TeamCreate_Table")
+            sql = "SELECT Team_ID AS id, Team_Name AS name FROM TeamCreate_Table WHERE Created_By = %s"
+            cursor.execute(sql, (user_id,))
             results = cursor.fetchall()
             cursor.close()
             conn.close()
-            return [row["Team_Name"] for row in results]
+            return results
         except Exception as e:
-            print("❌ 팀 목록 불러오기 오류:", e)
+            print("❌ 사용자별 팀 목록 불러오기 오류:", e)
             return []
