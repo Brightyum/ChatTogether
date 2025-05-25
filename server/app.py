@@ -25,6 +25,7 @@ from DataBase.user_db import UserDB
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from RAG.LLM.chat_system import ChatSystem
+from RAG.load import Load
 
 app = Flask(__name__)
 
@@ -172,7 +173,7 @@ def stream_ask():
 
     team_id = data.get("team_id")
     print(f"team_id = {team_id}")
-
+    
     if not user_id:
         return jsonify({"error": "로그인이 필요합니다"}), 401
 
