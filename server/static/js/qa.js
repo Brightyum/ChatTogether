@@ -1,3 +1,7 @@
+const mode = document.body.dataset.mode;
+const teamId = document.body.dataset.teamId !== "None" ? parseInt(document.body.dataset.teamId) : null;
+
+
 function handleSubmit(event) {
   event.preventDefault(); // 폼 새로고침 방지
 
@@ -19,10 +23,7 @@ function handleSubmit(event) {
   chatLog.appendChild(botEntry);
   chatLog.scrollTop = chatLog.scrollHeight;
 
-  // mode와 team_id는 서버에서 렌더링 시 주입 (Jinja2)
-  const mode = "{{ mode }}";
-  const teamId = "{{ team_id if team_id else '' }}";
-
+ 
   // 서버로 스트리밍 요청
   fetch("/stream-ask", {
     method: "POST",
@@ -89,3 +90,6 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", handleSubmit);
   }
 });
+
+
+

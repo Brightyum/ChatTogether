@@ -6,7 +6,7 @@
   <title>ETA | Q&A 시스템</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/qa.css') }}">
 </head>
-<body>
+<body data-mode="{{ mode | default('personal') }}" data-team-id="{{ team_id | default(none) }}"></body>
   <div class="sidebar-toggle-wrapper">
     <button class="toggle-button" id="toggleSidebar" title="사이드바 열기">☰</button>
   </div>

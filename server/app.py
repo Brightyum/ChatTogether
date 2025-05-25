@@ -39,6 +39,7 @@ app.config["PROPAGATE_EXCEPTIONS"] = True
 lg = LoginFunction()
 membership = MembershipFunction()
 
+
 # 메인페이지
 @app.route("/")
 def home():
@@ -50,6 +51,7 @@ def home():
 def signup_form():
     return render_template("signup.html")
 
+
 # 회원가입 폼 처리
 @app.route("/signup", methods=["POST"])
 def signup_submit():
@@ -57,13 +59,12 @@ def signup_submit():
     client_id = request.form["client_id"]
     password = request.form["password"]
     password_check = request.form["password_check"]
-    name = request.form["client_name"]        # 이름 추가
-    old = request.form["client_old"]          # 나이 추가
+    name = request.form["client_name"]  # 이름 추가
+    old = request.form["client_old"]  # 나이 추가
     gender = request.form["client_gender"]
     email = request.form["client_email"]
     phone = request.form["phone"]
     school = request.form["school"]
-
 
     # process_signup의 인자 순서와 맞춤
     success, message = membership.process_signup(
@@ -76,12 +77,11 @@ def signup_submit():
         return render_template("signup.html")
 
 
-#중복 확인
+# 중복 확인
 @app.route("/check_id")
 def check_id():
-   client_id = request.args.get("client_id")
-   return jsonify(membership.check_duplicate_id(client_id))
-
+    client_id = request.args.get("client_id")
+    return jsonify(membership.check_duplicate_id(client_id))
 
 
 # 로그인 페이지
@@ -115,13 +115,15 @@ def login():
             print(e)
     return render_template("login.html")
 
+
 # 로그아웃 페이지
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("home"))
 
-#질의응답 페이지 보여주기
+
+# 질의응답 페이지 보여주기
 @app.route("/qa", methods=["GET"])
 def qa_page():
     user_id = session.get("user_id")
@@ -136,8 +138,7 @@ def qa_page():
     team_creator = TeamCreator()
     user_teams = team_creator.get_user_teams(user_id)
 
-
-# 팀 모드 처리: team_id 유효성 확인
+    # 팀 모드 처리: team_id 유효성 확인
     if mode == "team" and team_id:
         try:
             team_id = int(team_id)
@@ -149,12 +150,13 @@ def qa_page():
     else:
         team_id = None  # 개인 모드일 때는 team_id 없음
 
-
-    return render_template("qa.html", question=question,
+    return render_template(
+        "qa.html",
+        question=question,
         mode=mode,
         team_id=team_id,
-        teams=user_teams  # 팀 목록 전달
-)
+        teams=user_teams,  # 팀 목록 전달
+    )
 
 
 # 질의응답
@@ -169,36 +171,38 @@ def stream_ask():
     mode = data.get("mode", "personal")
 
     team_id = data.get("team_id")
+    print(f"team_id = {team_id}")
 
-    
     if not user_id:
-        return jsonify({"error": "로그인이 필요합니다"}), 401  
+        return jsonify({"error": "로그인이 필요합니다"}), 401
 
     if not question:
         return jsonify({"error": "질문칸을 채워주세요"}), 400
-    
+
     # 팀 모드 처리: team_id 전달
     if mode == "team" and team_id:
         try:
             team_id = int(team_id)
         except ValueError:
             return jsonify({"error": "잘못된 팀 ID입니다."}), 400
-    
+
     if team_id:
         key = f"{user_id}_{team_id}"
     else:
         key = user_id
-    
+
     if key not in chat_systems:
         chat_systems[key] = ChatSystem(user_id=user_id, team_id=team_id)
 
     chat_system = chat_systems[key]
-    
+
     return Response(
         stream_with_context(chat_system.run(question)), content_type="text/plain"
     )
 
+
 prompt_list = []
+
 
 @app.route("/export_qna_json")
 def export_qna_json():
@@ -211,7 +215,6 @@ def export_qna_json():
         print("에러 발생:", e)
         flash("JSON 저장 중 오류가 발생했습니다.")
         return redirect(url_for("qa_page"))
-
 
 
 # 프롬프트 추가 페이지
@@ -243,6 +246,7 @@ def add_prompt():
 
         return redirect(url_for("add_prompt"))
     return render_template("add_prompt.html")
+
 
 # 팀 생성 페이지
 @app.route("/create_team", methods=["GET", "POST"])
@@ -288,28 +292,29 @@ def invite_member():
     if "user_id" not in session:
         flash("로그인이 필요합니다.")
         return redirect(url_for("login"))
-     
+
     user_id = session["user_id"]
     team_creator = TeamCreator()
-    team_list = team_creator.get_my_created_teams(user_id)  # 내가 만든 팀 목록만 불러오기
-
+    team_list = team_creator.get_my_created_teams(
+        user_id
+    )  # 내가 만든 팀 목록만 불러오기
 
     if request.method == "POST":
         team_id = request.form["team"]
         email = request.form["email"]
         role = request.form["role"]
 
-        #초대처리
+        # 초대처리
         team_invite = TeamInvite()
         success = team_invite.invite_member(team_id, email, role)
-        
+
         if success:
             flash(f"{email} 님을 팀에 초대했습니다.")
         else:
             flash("초대 처리 중 오류가 발생했습니다.")
 
         return redirect(url_for("invite_member"))
-    
+
     return render_template("invite_member.html", team_list=team_list)
 
 
@@ -317,7 +322,6 @@ def invite_member():
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
-
 
 
 # 사용자 정보 페이지
@@ -370,13 +374,13 @@ def update_profile():
 def mypage():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    
-    user_id = session["user_id"]  
+
+    user_id = session["user_id"]
 
     db = UserDB()
     user = db.get_user_info(session["user_id"])
-     
-    #팀 정보 가져오기
+
+    # 팀 정보 가져오기
     team_invite = TeamInvite()
     invited_teams = team_invite.get_user_teams(user_id)  # 초대받은 팀 목록
 
@@ -395,7 +399,8 @@ def mypage():
 
     return render_template("mypage.html", user=user, teams=teams)
 
-#마이페이지 - 팀나가기
+
+# 마이페이지 - 팀나가기
 @app.route("/leave_team", methods=["POST"])
 def leave_team():
     if "user_id" not in session:
@@ -415,10 +420,7 @@ def leave_team():
     return redirect(url_for("mypage"))
 
 
-
 # 서버 실행
 if __name__ == "__main__":
 
     app.run(port=5901)
-
-

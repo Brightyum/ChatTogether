@@ -6,12 +6,13 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_community.vectorstores import FAISS
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
 from RAG.vectorstore import VectorStore
+import os
 
 MAX_MEMORY_LENGTH = 4
-
 
 
 class ChatSystem:
@@ -20,24 +21,39 @@ class ChatSystem:
         self.user_id = user_id
         self.team_id = team_id
         self.memory = self.get_memory()
-        #self.chain = self.get_chain()
         self.session_summary = None
         self.vectorstore = VectorStore()
-        self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id=self.team_id)
-    
-    def search_vectorstore(self, query: str, k=3) -> list:
-        embedding_model = self.vectorstore.embedding.get_embedding_model()
-        query_vector = embedding_model.embed_query(query)
-        result = self.vectorstore_obj.similarity_search_by_vector(query_vector, k=k)
 
-        return result
-     
+        index_path = os.path.join(
+            self.vectorstore.VECTORSTORE_PATH,
+            str(team_id) if team_id is not None else "",
+        )
+        index_file = os.path.join(index_path, "index.faiss")
+        pkl_file = os.path.join(index_path, "index.pkl")
+
+        if os.path.exists(index_file) and os.path.exists(pkl_file):
+            print(f"[INFO] FAISS 인덱스 로드 (team_id: {team_id})")
+            self.vectorstore_obj = self.vectorstore.load_vectorstore(
+                team_id=self.team_id
+            )
+        else:
+            print(
+                f"[INFO] 인덱스 파일이 없어 set_vectorstore() 실행 (team_id: {team_id})"
+            )
+            self.vectorstore.set_vectorstore(team_id=self.team_id)
+            self.vectorstore_obj = self.vectorstore.load_vectorstore(
+                team_id=self.team_id
+            )
+
+    def search_vectorstore(self, query: str, k=3) -> list:
+        return self.vectorstore_obj.similarity_search_with_score(query, k=k)
+
     def get_prompt(self, retrieved_docs=None):
         user_prompt = UserPrompt()
         prompt_list = user_prompt.getPrompt(self.user_id)
 
         messages = [
-            ("system", "You are an helpful assistant that answers in Korean."),
+            ("system", "You are a helpful assistant that answers in Korean."),
             MessagesPlaceholder(variable_name="chat_history"),
         ]
 
@@ -46,118 +62,96 @@ class ChatSystem:
                 messages.append(
                     (
                         "system",
-                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}"
+                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
                     )
                 )
 
         if retrieved_docs:
             context = ""
-            for doc in retrieved_docs:
-                context += f"문서: {doc.page_content}\n\n"
-            
-            system_message = f"다음은 참고할 문서입니다:\n{context}"
-            
-            messages.append(("system", system_message))
+            for doc, score in retrieved_docs:
+                context += f"문서 (score: {score:.4f}): {doc.page_content}\n\n"
+            messages.append(("system", f"다음은 참고할 문서입니다:\n{context}"))
 
         messages.append(("human", "#Question: {question}"))
-
-        result_prompt = ChatPromptTemplate.from_messages(messages)
-        return result_prompt
+        return ChatPromptTemplate.from_messages(messages)
 
     def get_llm(self):
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0.5)  # max_tokens=350
-
-        return llm
+        return ChatOpenAI(model_name="gpt-4o", temperature=0.5)
 
     def get_memory(self):
         memory = ConversationBufferMemory(
             return_messages=True, memory_key="chat_history"
         )
-        # 메모리 변수를 빈 딕셔너리로 초기화
         memory.load_memory_variables({})
-
         return memory
 
     def get_runnable(self):
-        # RunnableLambda - 함수 매핑
-        # chat_history = {'chat_history': [대화기록]}
-        # itemgetter('키 이름') - 딕셔너리에 키이름의 키를 가진 value값을 반환
-        # RunnalblePassthrough - 입력 쌍을 배출
-        # runnable 객체가 받는 매서드의 반환값 + chat_history
-        runnable = RunnablePassthrough.assign(
+        return RunnablePassthrough.assign(
             chat_history=RunnableLambda(self.memory.load_memory_variables)
             | itemgetter("chat_history")
         )
-        return runnable
 
     def get_chain(self, retrieved_docs=None):
-        if self.team_id is not None and retrieved_docs:
-            prompt = self.get_prompt(retrieved_docs)
-            runnable = self.get_runnable()
-            llm = self.get_llm()
+        prompt = (
+            self.get_prompt(retrieved_docs) if retrieved_docs else self.get_prompt()
+        )
+        return self.get_runnable() | prompt | self.get_llm()
 
-            team_chain = runnable | prompt | llm
-            return team_chain
-        else:
-            runnable = self.get_runnable()
-            prompt = self.get_prompt()
-            llm = self.get_llm()
-
-            chain = runnable | prompt | llm
-            return chain
-
-    def run(self, question: str): 
-
+    def run(self, question: str):
         final_answer = ""
         try:
-            # team_id가 있는 경우 RAG시스템 수행
             retrieved_docs = []
             if self.team_id is not None:
                 retrieved_docs = self.search_vectorstore(question)
                 if retrieved_docs:
-                    print(f"team_id: {self.team_id}, {len(retrieved_docs)}개 문서 검색됨")
+                    print(
+                        f"team_id: {self.team_id}, {len(retrieved_docs)}개 문서 검색됨"
+                    )
                 else:
-                    print(f"유사 문서가 없어 기본 프롬프트를 사용하겠습니다.")
-            
+                    print("유사 문서가 없어 기본 프롬프트를 사용하겠습니다.")
+
             chain = self.get_chain(retrieved_docs)
-            
             response = chain.stream({"question": question})
 
             for token in response:
                 print(token.content, end="", flush=True)
-                content = token.content
                 final_answer += token.content
-                yield content
+                yield token.content
 
             self.memory.save_context({"inputs": question}, {"output": final_answer})
 
             if self.session_summary is not None:
-                self.save_to_db(self.user_id, question, final_answer, self.session_summary)
-
+                self.save_to_db(
+                    self.user_id, question, final_answer, self.session_summary
+                )
                 if self.team_id is not None:
-                    self.save_team_qna_to_db(self.user_id, self.team_id, question, final_answer, self.session_summary)
+                    self.save_team_qna_to_db(
+                        self.user_id,
+                        self.team_id,
+                        question,
+                        final_answer,
+                        self.session_summary,
+                    )
 
             self.check_memory_limit()
-
             return final_answer
-        
+
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
-
 
     def check_memory_limit(self):
         messages = self.memory.chat_memory.messages
         if len(messages) > MAX_MEMORY_LENGTH:
-            # 대화들 중 오래된 4개 요약
             summary = self.summarize_messages(messages)
-
-            # 최초의 요약만 session_summary에 저장
             if self.session_summary is None:
                 self.session_summary = summary
                 db = self.get_db()
-                db.save_history_chat_messages(self.user_id, messages, self.session_summary)
-                db.save_history_team_chat_messages(self.user_id, self.team_id, messages, self.session_summary)
-            # 최신 대화는 메모리에 저장
+                db.save_history_chat_messages(
+                    self.user_id, messages, self.session_summary
+                )
+                db.save_history_team_chat_messages(
+                    self.user_id, self.team_id, messages, self.session_summary
+                )
             self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
             self.memory.chat_memory.add_user_message("[이전 대화 요약]")
             self.memory.chat_memory.add_ai_message(summary)
@@ -177,16 +171,18 @@ class ChatSystem:
         )
         chain = summary_prompt | self.get_llm() | StrOutputParser()
         return chain.invoke({})
-#self.save_team_qna_to_db(self.user_id, self.team_id, question, final_answer, self.session_summary)
 
-    def save_team_qna_to_db(self, user_id, team_id, question, final_answer, session_summary):
-        db = self.get_db()
-        db.save_team_chat_messages(user_id, team_id, question, final_answer, session_summary)
+    def save_team_qna_to_db(
+        self, user_id, team_id, question, final_answer, session_summary
+    ):
+        self.get_db().save_team_chat_messages(
+            user_id, team_id, question, final_answer, session_summary
+        )
 
-    def save_to_db(self, user_id, question, final_answer, session_summary ):
-        db = self.get_db()
-        db.save_chat_messages(user_id, question, final_answer, session_summary)
-    
+    def save_to_db(self, user_id, question, final_answer, session_summary):
+        self.get_db().save_chat_messages(
+            user_id, question, final_answer, session_summary
+        )
+
     def get_db(self):
-        db = UserQnaSave()
-        return db
+        return UserQnaSave()
