@@ -126,3 +126,24 @@ class TeamCreator:
             print("❌ 내가 만든 팀 목록 조회 오류:", e)
             return []
 
+
+    def delete_team(self, team_id, user_id):
+        try:
+            conn = self.connect_db()
+            cursor = conn.cursor()
+            # 생성자 확인
+            cursor.execute("SELECT Created_By FROM TeamCreate_Table WHERE Team_ID = %s", (team_id,))
+            result = cursor.fetchone()
+            if not result or result["Created_By"] != user_id:
+                return False  # 생성자가 아니면 삭제 불가
+
+            # 삭제
+            cursor.execute("DELETE FROM Team_Table WHERE Team_ID = %s", (team_id,))
+            cursor.execute("DELETE FROM TeamCreate_Table WHERE Team_ID = %s", (team_id,))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print("❌ 팀 삭제 중 오류:", e)
+            return False

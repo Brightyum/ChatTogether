@@ -57,11 +57,26 @@
         <li>
           <strong>팀 이름:</strong> {{ team.Team_Name }} <br>
           <strong>팀 설명:</strong> {{ team.Team_Description }} <br>
-          <strong>내 역할:</strong> {{ team.Role }}
-          <form method="POST" action="/leave_team" style="display:inline;">
-            <input type="hidden" name="team_id" value="{{ team.Team_ID }}">
-            <button type="submit">팀 나가기</button>
-          </form>
+          <strong>내 역할:</strong> {{ team.Role }}<br>
+          <strong>팀원 목록 :</strong>
+          <ul>
+            {% for member in team_members[team.Team_ID] %}
+              <li>{{ member.Client_ID }} ({{ member.Role }})</li>
+            {% endfor %}
+          </ul>
+
+        {% if team.Role == '생성자' %}
+            <form method="POST" action="/delete_team" style="display:inline;">
+              <input type="hidden" name="team_id" value="{{ team.Team_ID }}">
+              <button type="submit" style="background-color: red; color: white;">팀 삭제</button>
+            </form>
+          {% else %}
+            <form method="POST" action="/leave_team" style="display:inline;">
+              <input type="hidden" name="team_id" value="{{ team.Team_ID }}">
+              <button type="submit">팀 나가기</button>
+            </form>
+          {% endif %}
+
         </li>
       {% endfor %}
     </ul>

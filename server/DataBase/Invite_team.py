@@ -97,7 +97,7 @@ class TeamInvite:
             print("❌ 사용자별 팀 목록 조회 오류:", e)
             return []
 
-
+#팀 나가기기
     def leave_team(self, user_id, team_id):
         try:
             conn = self.connect_db()
@@ -115,3 +115,35 @@ class TeamInvite:
         except Exception as e:
             print("❌ 팀 나가기 오류:", e)
             return False
+
+    #팀원 목록 가져오기
+    def get_team_members(self, team_id):
+        try:
+            conn = self.connect_db()
+            cursor = conn.cursor()
+            sql = """
+                SELECT 
+                    ClientID_fir AS Client_ID, ClientType_fir AS Role
+                FROM Team_Table WHERE Team_ID = %s
+                UNION ALL
+                SELECT ClientID_sec, ClientType_sec FROM Team_Table WHERE Team_ID = %s
+                UNION ALL
+                SELECT ClientID_thr, ClientType_thr FROM Team_Table WHERE Team_ID = %s
+                UNION ALL
+                SELECT ClientID_fou, ClientType_fou FROM Team_Table WHERE Team_ID = %s
+                UNION ALL
+                SELECT ClientID_fiv, ClientType_fiv FROM Team_Table WHERE Team_ID = %s
+                UNION ALL
+                SELECT ClientID_six, ClientType_six FROM Team_Table WHERE Team_ID = %s
+            """
+            cursor.execute(sql, (team_id, team_id, team_id, team_id, team_id, team_id))
+            results = cursor.fetchall()
+            cursor.close()
+            conn.close()
+
+            # NULL 값 필터링
+            members = [row for row in results if row["Client_ID"]]
+            return members
+        except Exception as e:
+            print("❌ 팀원 목록 조회 오류:", e)
+            return []
