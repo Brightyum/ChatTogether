@@ -301,15 +301,16 @@ def invite_member():
 
     if request.method == "POST":
         team_id = request.form["team"]
-        email = request.form["email"]
+        invited_user_id = request.form["user_id"]  # 이메일 대신 사용자 ID 입력 받기
         role = request.form["role"]
 
         # 초대처리
         team_invite = TeamInvite()
-        success = team_invite.invite_member(team_id, email, role)
+
+        success = team_invite.invite_member(team_id, invited_user_id, role)
 
         if success:
-            flash(f"{email} 님을 팀에 초대했습니다.")
+            flash(f"{invited_user_id} 님을 팀에 초대했습니다.")
         else:
             flash("초대 처리 중 오류가 발생했습니다.")
 
@@ -382,10 +383,10 @@ def mypage():
 
     # 팀 정보 가져오기
     team_invite = TeamInvite()
-    invited_teams = team_invite.get_user_teams(user_id)  # 초대받은 팀 목록
+    invited_teams = list(team_invite.get_user_teams(user_id))  # 리스트로 변환
 
     team_creator = TeamCreator()
-    created_teams = team_creator.get_my_created_teams(user_id)  # 생성한 팀 목록
+    created_teams = list(team_creator.get_my_created_teams(user_id))  # 생성한 팀
 
     # 생성한 팀 데이터를 초대받은 팀과 형식 맞추기
     for team in created_teams:
@@ -397,7 +398,15 @@ def mypage():
     # 'Team_Name'이 존재하는 팀만 필터링
     teams = [team for team in teams if team.get("Team_Name")]
 
-    return render_template("mypage.html", user=user, teams=teams)
+    # 팀별 팀원 정보 가져오기
+    team_members = {}
+    for team in teams:
+        team_id = team["Team_ID"]
+        team_members[team_id] = team_invite.get_team_members(team_id)
+
+    return render_template(
+        "mypage.html", user=user, teams=teams, team_members=team_members
+    )
 
 
 # 마이페이지 - 팀나가기
@@ -416,6 +425,26 @@ def leave_team():
         flash("팀에서 나갔습니다.")
     else:
         flash("팀 나가기 중 오류가 발생했습니다.")
+
+    return redirect(url_for("mypage"))
+
+
+# 마이페이지 - 팀삭제
+@app.route("/delete_team", methods=["POST"])
+def delete_team():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    team_id = request.form["team_id"]
+
+    team_creator = TeamCreator()
+    success = team_creator.delete_team(team_id, user_id)
+
+    if success:
+        flash("팀이 성공적으로 삭제되었습니다.")
+    else:
+        flash("팀 삭제 중 오류가 발생했습니다. (생성자만 삭제 가능)")
 
     return redirect(url_for("mypage"))
 
