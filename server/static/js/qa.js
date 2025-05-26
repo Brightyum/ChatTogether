@@ -170,3 +170,58 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+document.querySelectorAll('.team-question').forEach(item => {
+  item.addEventListener('click', event => {
+    event.preventDefault();
+    const topic = event.target.dataset.topic;
+
+    fetch(`/get_conversation_data?topic=${encodeURIComponent(topic)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const chatLog = document.getElementById("chat-log");
+          chatLog.innerHTML = ""; // 기존 대화 내용 비우기
+
+          data.data.forEach(entry => {
+            const userMsg = document.createElement("div");
+            userMsg.className = "chat-entry user-entry";
+            userMsg.innerHTML = `<strong>👤 사용자:</strong> ${entry.Personal_Asw}`;
+            chatLog.appendChild(userMsg);
+
+            const botMsg = document.createElement("div");
+            botMsg.className = "chat-entry bot-entry";
+            botMsg.innerHTML = `<strong>🤖 ETA:</strong> ${entry.Personal_Rsp}`;
+            chatLog.appendChild(botMsg);
+          });
+
+          chatLog.scrollTop = chatLog.scrollHeight;
+
+          // ✅ 추가: 서버에 대화 기록 등록 요청
+          fetch("/load_conversation_to_memory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversation_data: data.data,
+              team_id: teamId  // 상단 const teamId = ... 선언된 값 사용
+            })
+          })
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              console.log("✅ 대화 기록이 ChatSystem 메모리에 등록되었습니다.");
+            } else {
+              console.error("❌ 메모리 등록 실패:", result.message);
+            }
+          })
+          .catch(error => {
+            console.error("❌ 메모리 등록 요청 실패:", error);
+          });
+          // ✅ 추가 끝
+
+        } else {
+          alert(data.message);
+        }
+      });
+  });
+});

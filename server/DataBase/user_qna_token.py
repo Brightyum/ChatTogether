@@ -53,8 +53,13 @@ class UserQnaToken:
                 """
                 cursor.execute(sql, (user_id,))
                 result = cursor.fetchone()
-                if result and "total_usage_fee" in result:
-                    return result["total_usage_fee"]
+                if result:
+                    # DictCursor가 아니면 result[0]에서 꺼냄
+                    return (
+                        result["total_usage_fee"]
+                        if isinstance(result, dict)
+                        else result[0]
+                    )
                 else:
                     return 0.0
         except Exception as e:

@@ -59,11 +59,15 @@
 
 
       <h2>팀 질문 목록</h2>
-      <ul>
-        <li>DB 구조 질문</li>
-        <li>API 설계 기준</li>
-        <li>배포 방식</li>
-      </ul>
+      {% if user_qna_list %}
+        {% for user_qna in user_qna_list %}
+          <li>
+            <a href="#" class="team-question" data-topic="{{ user_qna }}">{{ user_qna }}</a>
+          </li>
+        {% endfor %}
+      {% else %}
+        <li>등록된 질문이 없습니다.</li>
+      {% endif %}
     </aside>
 
     <!-- 메인 영역 -->

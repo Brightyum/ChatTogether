@@ -374,7 +374,11 @@ class ChatSystem:
             [
                 (
                     "system",
-                    "다음 사용자와 AI 간의 대화를 맥락을 유지하며 한글로 간결히 요약하세요.",
+                    """
+                    다음 사용자와 AI 간의 대화를 맥락을 유지하며 한글로 요약을 하세요.
+                    AI가 이 요약문을 보았을때 사용자와 나누었던 이전 대화내용을 파악 할 수 있어야 한다.
+                    사용자는 무조건 이전 대화에 대한 질문을 할 것 이다.
+                    """,
                 ),
                 (
                     "human",
@@ -384,6 +388,39 @@ class ChatSystem:
         )
         chain = summary_prompt | self.get_llm() | StrOutputParser()
         return chain.invoke({})
+
+    def load_previous_conversation(self, conversation_data):
+        """
+        DB에서 불러온 conversation_id별 대화 데이터를 메모리에 추가하고,
+        요약(summarize_messages) 처리 후 메모리에 최종 등록.
+
+        :param conversation_data: [{Personal_Asw: "질문", Personal_Rsp: "답변"}, ...]
+        """
+        if not conversation_data:
+            print("[INFO] 불러올 대화 데이터가 없습니다.")
+            return
+
+        # 1. 대화 기록을 memory에 추가
+        for entry in conversation_data:
+            question = entry.get("Personal_Asw", "").strip()
+            answer = entry.get("Personal_Rsp", "").strip()
+
+            if question:
+                self.memory.chat_memory.add_user_message(question)
+            if answer:
+                self.memory.chat_memory.add_ai_message(answer)
+
+        # 2. 요약 생성 후 memory에 추가
+        messages = self.memory.chat_memory.messages
+        if messages:
+            summary = self.summarize_messages(messages)
+            self.memory.chat_memory.messages = messages[-MAX_MEMORY_LENGTH:]
+            self.memory.chat_memory.add_user_message("[이전 대화 요약]")
+            self.memory.chat_memory.add_ai_message(summary)
+            self.session_summary = summary
+
+            print("[INFO] 이전 대화 기록이 요약 및 메모리에 등록되었습니다.")
+            print(f"[요약 내용]: {summary}")
 
     def save_team_qna_to_db(
         self, user_id, team_id, question, final_answer, session_summary

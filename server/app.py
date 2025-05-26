@@ -19,6 +19,7 @@ from datetime import datetime
 from DataBase.Create_Team import TeamCreator
 from DataBase.Invite_team import TeamInvite
 from DataBase.user_qna_token import UserQnaToken
+from DataBase.user_qna_list import UserQnaList
 import sys
 import os
 
@@ -140,6 +141,10 @@ def qa_page():
     team_creator = TeamCreator()
     user_teams = team_creator.get_user_teams(user_id)
 
+    # 요약문 가져오기
+    qna_list = UserQnaList()
+    user_qna_list = qna_list.get_conversation_ids(user_id)
+
     # 프롬프트 가져오기
     prompt_db = UserPrompt()
     user_prompts = prompt_db.getPrompt(user_id) or []
@@ -163,7 +168,47 @@ def qa_page():
         team_id=team_id,
         teams=user_teams,  # 팀 목록 전달
         prompts=user_prompts,  # 프롬프트 전달
+        user_qna_list=user_qna_list,
     )
+
+
+# 팀 질문 목록 데이터 가져와 보여주기
+@app.route("/get_conversation_data", methods=["GET"])
+def get_conversation_data():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
+    user_id = session["user_id"]
+    topic = request.args.get("topic")
+
+    if not topic:
+        return jsonify({"success": False, "message": "topic 값이 필요합니다."}), 400
+
+    qna_list = UserQnaList()
+    results = qna_list.get_conversation_data(user_id, topic)
+
+    return jsonify({"success": True, "data": results})
+
+
+@app.route("/load_conversation_to_memory", methods=["POST"])
+def load_conversation_to_memory():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
+    user_id = session["user_id"]
+    data = request.get_json()
+    conversation_data = data.get("conversation_data")
+    team_id = data.get("team_id")  # optional
+
+    # ChatSystem 인스턴스 가져오기
+    key = f"{user_id}_{team_id}" if team_id else user_id
+    if key not in chat_systems:
+        chat_systems[key] = ChatSystem(user_id=user_id, team_id=team_id)
+
+    chat_system = chat_systems[key]
+    chat_system.load_previous_conversation(conversation_data)
+
+    return jsonify({"success": True, "message": "메모리에 대화 기록이 등록되었습니다."})
 
 
 # 질의응답
@@ -411,6 +456,7 @@ def mypage():
     token_db = UserQnaToken()
     usage_fee = token_db.get_total_usage_fee(user_id)
 
+    print(f"usage_fee = {usage_fee}")
     # 팀 정보 가져오기
     team_invite = TeamInvite()
     invited_teams = list(team_invite.get_user_teams(user_id))  # 리스트로 변환
