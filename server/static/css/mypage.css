@@ -216,3 +216,8 @@ body {
   margin-bottom: 8px;
   font-size: 0.95rem;
 }
+
+.plan-info {
+  font-weight: bold;
+  color: #6c63ff;
+}

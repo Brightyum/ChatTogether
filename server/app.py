@@ -410,7 +410,8 @@ def mypage():
 
     token_db = UserQnaToken()
     usage_fee = token_db.get_total_usage_fee(user_id)
-
+    usage_fee = int(usage_fee) if usage_fee else 0 #요금 소수점 제거
+    
     # 팀 정보 가져오기
     team_invite = TeamInvite()
     invited_teams = list(team_invite.get_user_teams(user_id))  # 리스트로 변환
