@@ -138,6 +138,10 @@ def qa_page():
     team_creator = TeamCreator()
     user_teams = team_creator.get_user_teams(user_id)
 
+    # 프롬프트 가져오기
+    prompt_db = UserPrompt()
+    user_prompts = prompt_db.getPrompt(user_id) or []
+
     # 팀 모드 처리: team_id 유효성 확인
     if mode == "team" and team_id:
         try:
@@ -156,6 +160,7 @@ def qa_page():
         mode=mode,
         team_id=team_id,
         teams=user_teams,  # 팀 목록 전달
+        prompts=user_prompts, #프롬프트 전달
     )
 
 
@@ -319,7 +324,7 @@ def invite_member():
     return render_template("invite_member.html", team_list=team_list)
 
 
-# 가격 페이지지
+# 가격 페이지
 @app.route("/pricing")
 def pricing():
     return render_template("pricing.html")
@@ -471,6 +476,73 @@ def select_plan():
         return jsonify({"success": True, "message": "요금제가 저장되었습니다."})
     else:
         return jsonify({"success": False, "message": "DB 저장 실패"}), 500
+
+#질의응답 페이지 - 프롬프트 선택 시 서버 처리
+@app.route("/select_prompt", methods=["POST"])
+def select_prompt():
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
+
+    data = request.get_json()
+    title = data.get("title")
+    category = data.get("category")
+    content = data.get("content")
+
+    # 로그 확인용 - ChatSystem 연동 전
+    print(f"프롬프트 선택됨: title={title}, category={category}, content={content}")
+
+    #ChatSystem에 전달 로직 작성 해야 함
+    return jsonify({"success": True, "message": "프롬프트 선택 성공"})
+
+#질의응답 페이지- 프롬프트 수정
+@app.route("/edit_prompt", methods=["GET", "POST"])
+def edit_prompt():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    prompt_db = UserPrompt()
+
+    if request.method == "POST":
+        original_title = request.form["original_title"]
+        new_title = request.form["title"]
+        category = request.form["category"]
+        content = request.form["content"]
+
+        success = prompt_db.updatePrompt(user_id, original_title, new_title, category, content)
+        if success:
+            flash("프롬프트가 성공적으로 수정되었습니다.")
+        else:
+            flash("프롬프트 수정 중 오류가 발생했습니다.")
+        return redirect(url_for("qa_page"))
+
+    # GET 요청 → 수정 폼 로드
+    title = request.args.get("title")
+    prompt = prompt_db.getPromptByTitle(user_id, title)
+    if not prompt:
+        flash("프롬프트를 찾을 수 없습니다.")
+        return redirect(url_for("qa_page"))
+
+    return render_template("edit_prompt.html", prompt=prompt)
+
+#질의응답 페이지 - 프롬프트 삭제
+@app.route("/delete_prompt", methods=["POST"])
+def delete_prompt():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    title = request.form["title"]
+
+    prompt_db = UserPrompt()
+    success = prompt_db.deletePrompt(user_id, title)
+
+    if success:
+        flash("프롬프트가 삭제되었습니다.")
+    else:
+        flash("프롬프트 삭제 중 오류가 발생했습니다.")
+
+    return redirect(url_for("qa_page"))
 
 
 
