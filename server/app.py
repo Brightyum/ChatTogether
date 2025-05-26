@@ -18,6 +18,7 @@ from DataBase.TeamQnaExporter import TeamQnaExporter
 from datetime import datetime
 from DataBase.Create_Team import TeamCreator
 from DataBase.Invite_team import TeamInvite
+from DataBase.user_qna_token import UserQnaToken
 import sys
 import os
 
@@ -398,6 +399,9 @@ def mypage():
     db = UserDB()
     user = db.get_user_info(session["user_id"])
 
+    token_db = UserQnaToken()
+    usage_fee = token_db.get_total_usage_fee(user_id)
+ 
     # 팀 정보 가져오기
     team_invite = TeamInvite()
     invited_teams = list(team_invite.get_user_teams(user_id))  # 리스트로 변환
@@ -422,7 +426,7 @@ def mypage():
         team_members[team_id] = team_invite.get_team_members(team_id)
 
     return render_template(
-        "mypage.html", user=user, teams=teams, team_members=team_members
+        "mypage.html", user=user, teams=teams, team_members=team_members, usage_fee=usage_fee
     )
 
 

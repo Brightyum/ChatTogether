@@ -9,6 +9,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import FAISS
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
+from server.DataBase.user_qna_token import UserQnaToken
 from RAG.vectorstore import VectorStore
 from RAG.load import Load
 from RAG.split import Split
@@ -177,6 +178,17 @@ class ChatSystem:
                             final_answer=final_answer,
                         )
 
+                        self.save_to_token_db(
+                            user_id=self.user_id,
+                            question=question,
+                            answer=final_answer,
+                            prompt_tokens=token_info["prompt_tokens"],
+                            chat_history_tokens=token_info["chat_history_tokens"],
+                            question_tokens=token_info["question_tokens"],
+                            final_answer_tokens=token_info["final_answer_tokens"],
+                            total_token=token_info["total_tokens"],
+                        )
+
                         print("\n[INFO] 토큰 사용량")
                         print("──────────────────────────────")
                         print(f"질문 (Q):    {token_info['question_tokens']} tokens")
@@ -257,6 +269,17 @@ class ChatSystem:
                 chat_history=self.memory.chat_memory.messages,
                 question=question,
                 final_answer=final_answer,
+            )
+
+            self.save_to_token_db(
+                user_id=self.user_id,
+                question=question,
+                answer=final_answer,
+                prompt_tokens=token_info["prompt_tokens"],
+                chat_history_tokens=token_info["chat_history_tokens"],
+                question_tokens=token_info["question_tokens"],
+                final_answer_tokens=token_info["final_answer_tokens"],
+                total_token=token_info["total_tokens"],
             )
 
             print("\n[INFO] 토큰 사용량")
@@ -370,5 +393,30 @@ class ChatSystem:
             user_id, question, final_answer, session_summary
         )
 
-    def get_db(self):
-        return UserQnaSave()
+    def save_to_token_db(
+        self,
+        user_id,
+        question,
+        answer,
+        prompt_tokens,
+        chat_history_tokens,
+        question_tokens,
+        final_answer_tokens,
+        total_token,
+    ):
+        self.get_db(user_id).save_qna_token(
+            user_id,
+            question,
+            answer,
+            prompt_tokens,
+            chat_history_tokens,
+            question_tokens,
+            final_answer_tokens,
+            total_token,
+        )
+
+    def get_db(self, user_id=None):
+        if user_id:
+            return UserQnaToken()
+        else:
+            return UserQnaSave()
