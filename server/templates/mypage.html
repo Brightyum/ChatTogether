@@ -43,8 +43,15 @@
             <li><strong>이메일:</strong> {{ user[5] }}</li>
             <li><strong>전화번호:</strong> {{ user[6] }}</li>
             <li><strong>학교:</strong> {{ user[7] }}</li>
-            <li><strong>선택한 요금제:</strong> {{ user[8] if user[8] else "아직 선택 안 함" }}
-        </ul>
+            <li>
+        <strong>선택한 요금제:</strong> 
+        <span class="plan-info">{{ user[8] if user[8] else "아직 선택 안 함" }}</span>
+      </li>
+      
+      {% if user[8] == '토큰 기반 과금 플랜' %}
+      <li><strong>현재 사용 요금:</strong> {{ "{:,}".format(usage_fee) }}원</li>
+      {% endif %}
+    </ul>
         
 
         <a href="{{ url_for('profile') }}" class="edit-btn">정보 수정하기</a>
