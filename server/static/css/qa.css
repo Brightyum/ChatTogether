@@ -226,3 +226,130 @@ body {
   color: white;
   font-weight: bold;
 }
+
+/* 선택된 프롬프트 강조 */
+.prompt-item.selected {
+  background-color: #6c63ff;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 4px 8px;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.prompt-item {
+  cursor: pointer;
+}
+
+/* 카드 레이아웃 */
+.prompt-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* 카드 */
+.prompt-card {
+  border-bottom: 1px solid #ddd;
+  padding: 8px 0;
+  position: relative;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.prompt-title {
+  font-weight: normal;
+  transition: all 0.2s;
+}
+
+/* 강조 효과 */
+.prompt-card:hover .prompt-title {
+  font-weight: bold;
+  background-color: #eef;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* 설명 */
+.prompt-description {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.6s ease, opacity 0.6s ease, padding 0.6s ease;
+  padding: 0 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Hover 시 설명 표시 */
+.prompt-card:hover .prompt-description {
+  max-height: 200px;  /* 충분히 큰 값으로 설정 */
+  opacity: 1;
+  padding: 8px;
+}
+
+/* 카드 본문 */
+.card-body {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* ⋮ 버튼 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-width: 100px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.dropdown-content form {
+  margin: 0;
+}
+
+.dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+.dropdown-content.show {
+  display: block;
+}
+

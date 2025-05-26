@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>프롬프트 수정</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/prompt.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h1>프롬프트 수정</h1>
+    <form method="POST">
+      <input type="hidden" name="original_title" value="{{ prompt[0] }}">
+      <label for="title">제목</label>
+      <input type="text" name="title" id="title" value="{{ prompt[0] }}" required>
+
+      <label for="category">카테고리</label>
+      <input type="text" name="category" id="category" value="{{ prompt[1] }}" required>
+
+      <label for="content">내용</label>
+      <textarea name="content" id="content" rows="6" required>{{ prompt[2] }}</textarea>
+
+      <button type="submit">수정하기</button>
+    </form>
+  </div>
+</body>
+</html>
