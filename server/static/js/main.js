@@ -50,7 +50,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // 2. 늑대 사라짐
   setTimeout(() => {
     wolf.style.opacity = 0;
-  }, 4000);
+  }, 1500);
 
   // 3. blob 다시 등장 (회전 준비)
   setTimeout(() => {
@@ -60,12 +60,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // ✅ 여기서 애니메이션 시작
     requestAnimationFrame(animate);
-  }, 5500);
+  }, 1700);
 
   // 4. 텍스트 등장
   setTimeout(() => {
     hero.classList.add('show');
-  }, 6500);
+  }, 2000);
 });
 
 function animate(time) {
@@ -102,7 +102,7 @@ function animate(time) {
 // 텍스트 등장 (예: 늑대가 사라진 후)
 setTimeout(() => {
   document.getElementById('hero-content').classList.add('show');
-}, 6500);
+}, 3000);
 
 function confirmLogout() {
     const result = confirm("로그아웃 하시겠습니까?");
@@ -110,3 +110,13 @@ function confirmLogout() {
       window.location.href = "/logout";  // 실제 Flask 라우트에 맞춰 리디렉션
     }
   }
+
+// 늑대와 원 요소 선택
+const wolf = document.getElementById('wolf-outline');
+const magicCircle = document.querySelector('.magic-circle');
+
+// 늑대 사라질 때 원도 같이 사라짐
+setTimeout(() => {
+  wolf.style.opacity = 0;
+  magicCircle.style.opacity = 0;  // 추가
+}, 2000);
