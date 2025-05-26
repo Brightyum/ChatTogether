@@ -5,8 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ETA | Q&A 시스템</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/qa.css') }}">
+  <script>
+    function confirmLogout() {
+      if (confirm("로그아웃 하시겠습니까?")) {
+        window.location.href = "{{ url_for('logout') }}";
+      }
+    }
+  </script>
 </head>
 <body data-mode="{{ mode | default('personal') }}" data-team-id="{{ team_id | default(none) }}"></body>
+
+ <!-- 네비게이션 바 -->
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo">
+        <a href="/">
+          <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ETA 로고">
+          <span>ETA</span>
+        </a>
+      </div>
+      <nav class="menu">
+        <a href="#">Solutions <span class="arrow">▼</span></a>
+        <a href="#">Resources <span class="arrow">▼</span></a>
+        <a href="#">Community <span class="arrow">▼</span></a>
+        <a href="/pricing">Pricing <span class="arrow">▼</span></a>
+      </nav>
+    </div>
+    <div class="nav-right">
+      {% if session.get("user_id") %}
+        <span class="welcome-message">환영합니다, <strong>{{ session.get("user_name") }}</strong>님</span>
+        <a href="{{ url_for('mypage') }}" class="cta">마이페이지</a>
+        <a href="#" class="cta" onclick="confirmLogout()">로그아웃</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="cta">로그인</a>
+        <a href="{{ url_for('signup_form') }}" class="cta">회원가입</a>
+      {% endif %}
+    </div>
+  </header>
+
   <div class="sidebar-toggle-wrapper">
     <button class="toggle-button" id="toggleSidebar" title="사이드바 열기">☰</button>
   </div>
@@ -28,6 +64,7 @@
     </ul>
 
     <div class="prompt-cards">
+      <h2>프롬프트 목록</h2>
       {% if prompts %}
         {% for prompt in prompts %}
           <div class="prompt-card">
@@ -57,7 +94,7 @@
       {% endif %}
     </div>
 
-
+      {% if mode != 'team' %}  <!--팀이 아닐때만 개인 질문 목록 나오게-->
       <h2>개인 질문 목록</h2>
       {% if user_qna_list %}
         {% for user_qna in user_qna_list %}
@@ -68,6 +105,7 @@
       {% else %}
         <li>등록된 질문이 없습니다.</li>
       {% endif %}
+      {% endif %}
     </aside>
 
     <!-- 메인 영역 -->
@@ -75,9 +113,14 @@
 
       <!-- 버튼 그룹 -->
       <div class="navigation-buttons">
+        {% if mode == 'team' %}
+        <a href="{{ url_for('export_qna_json', team_id=team_id) }}" class="nav-btn">QnA JSON 저장</a>
+       {% endif %}
+       <div class="right-buttons">
         <a href="{{ url_for('add_prompt') }}" class="nav-btn">프롬프트 추가</a>
         <a href="{{ url_for('invite_member') }}" class="nav-btn">팀원 초대</a>
         <a href="{{ url_for('create_team') }}" class="nav-btn">팀 추가</a>
+      </div>
       </div>
 
       <!-- 대화 로그 -->
@@ -94,7 +137,6 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/qa.js') }}"></script>
-  <a href="{{ url_for('export_qna_json', team_id=team_id) }}" class="nav-btn">QnA JSON 저장</a>
 
 </body>
 </html>

@@ -80,9 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleButton = document.getElementById("toggleSidebar");
   const sidebar = document.getElementById("sidebar");
 
-  toggleButton.addEventListener("click", () => {
-    sidebar.classList.toggle("hidden");
-  });
+  if (toggleButton && sidebar) {
+    toggleButton.addEventListener("click", () => {
+      sidebar.classList.toggle("hidden");
+    });
+  }
 
   // 폼 제출 이벤트 등록
   const form = document.querySelector(".input-box");
@@ -90,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", handleSubmit);
   }
 });
+
 
 //프롬프트 선택 이벤트 처리 함수
 document.addEventListener("DOMContentLoaded", () => {
