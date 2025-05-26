@@ -168,6 +168,67 @@ class ChatSystem:
                     response = top_doc.metadata.get("답변")
                     if response:
                         print(f"VectorStore 응답: {response} (score: {score})")
+                        final_answer = response
+                        # 🔥 토큰 계산
+                        token_info = self.calculate_total_tokens(
+                            prompt_template=self.get_prompt(retrieved_docs),
+                            chat_history=self.memory.chat_memory.messages,
+                            question=question,
+                            final_answer=final_answer,
+                        )
+
+                        print("\n[INFO] 토큰 사용량")
+                        print("──────────────────────────────")
+                        print(f"질문 (Q):    {token_info['question_tokens']} tokens")
+                        print(f"답변 (A):   {token_info['final_answer_tokens']} tokens")
+                        print(f"프롬프트:    {token_info['prompt_tokens']} tokens")
+                        print(f"대화 기록:  {token_info['chat_history_tokens']} tokens")
+                        print("──────────────────────────────")
+                        print(f"총합:       {token_info['total_tokens']} tokens")
+                        print("──────────────────────────────")
+
+                        # 🔹 데이터 출력: 실제 질문, 답변, 프롬프트, 대화 기록
+                        print("\n[INFO] 실제 데이터 확인")
+                        print("──────────────────────────────")
+                        print(f"질문 (Q): {question}")
+
+                        print("──────────────────────────────")
+                        print(f"답변 (A):\n{final_answer}")
+
+                        print("──────────────────────────────")
+                        # 프롬프트 출력
+                        try:
+                            prompt_messages = self.get_prompt(
+                                retrieved_docs
+                            ).format_messages(
+                                question=question,
+                                chat_history=self.memory.chat_memory.messages,
+                            )
+                            prompt_text = "\n".join(
+                                [
+                                    f"{msg.type}: {msg.content}"
+                                    for msg in prompt_messages
+                                ]
+                            )
+                            print(f"프롬프트:\n{prompt_text}")
+                        except Exception as e:
+                            print(f"[WARN] 프롬프트 출력 중 오류: {e}")
+
+                        print("──────────────────────────────")
+                        # 대화 기록 출력
+                        if self.memory.chat_memory.messages:
+                            chat_history_text = "\n".join(
+                                [
+                                    f"{msg.type}: {msg.content}"
+                                    for msg in self.memory.chat_memory.messages
+                                ]
+                            )
+                            print(f"대화 기록:\n{chat_history_text}")
+                        else:
+                            print("대화 기록: (없음)")
+
+                        print("──────────────────────────────")
+
                         yield response
                         return  # ✅ 응답이 있으면 여기서 끝
                     else:
