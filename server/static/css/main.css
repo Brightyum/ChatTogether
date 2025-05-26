@@ -302,3 +302,30 @@ body {
   font-weight: bold;
   text-decoration: none;
 }
+
+.highlighted-text {
+  font-size: 3rem;
+  font-weight: 900;
+  text-align: center;
+  background: linear-gradient(90deg, #6C63FF, #2d26a8, #9CC5FF);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gradientText 3s ease infinite alternate;
+}
+
+@keyframes gradientText {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.input-box button {
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 8px #2b247c; }
+  50% { transform: scale(1.05); box-shadow: 0 0 16px #2b247c; }
+  100% { transform: scale(1); box-shadow: 0 0 8px #2b247c; }
+}

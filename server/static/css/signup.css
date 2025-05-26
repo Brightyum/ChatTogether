@@ -1,28 +1,43 @@
 /* 전체 화면 설정 */
-body {
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   background: linear-gradient(to right, #f5f7fa, #c3cfe2);
   font-family: 'Segoe UI', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  margin: 0;
+}
+
+/* 중앙 정렬 + 위아래 여백 추가 */
+body::before,
+body::after {
+  content: "";
+  flex: 1;
+}
+
+body {
+  flex-direction: column;
 }
 
 /* 폼 박스 */
 .form-container {
   background-color: white;
-  padding: 40px 30px;
+  padding: 32px 24px;
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;  /* 조금 줄인 크기 */
   text-align: center;
+  flex-shrink: 0;
 }
 
-/* 제목 */
 .form-container h2 {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
   color: #333;
 }
 
@@ -36,44 +51,31 @@ body {
 }
 
 .form-container input[type="text"],
-.form-container input[type="password"] {
+.form-container input[type="password"],
+.form-container input[type="number"],
+.form-container input[type="email"],
+.form-container input[type="tel"],
+.form-container select {
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-sizing: border-box;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: border-color 0.2s;
 }
 
-.form-container input[type="tel"] {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-sizing: border-box;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.form-text {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.85rem;
-  color: #888;
-}
-
-
-.form-container input:focus {
+.form-container input:focus,
+.form-container select:focus {
   border-color: #6c63ff;
   outline: none;
 }
 
 /* 버튼 */
 .form-container button {
-  margin-top: 20px;
+  margin-top: 18px;
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   background-color: #6c63ff;
   border: none;
   color: white;
@@ -89,8 +91,8 @@ body {
 
 /* 하단 안내 */
 .form-footer {
-  margin-top: 16px;
-  font-size: 0.95rem;
+  margin-top: 12px;
+  font-size: 0.9rem;
   color: #666;
 }
 
@@ -106,7 +108,7 @@ body {
 
 .form-group {
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .input-with-button {
@@ -119,17 +121,17 @@ body {
 .input-with-button input[type="text"] {
   flex: 2;
   padding: 0 12px;
-  height: 48px;
+  height: 42px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .input-with-button button {
   flex: 1;
   padding: 2px 0;
-  font-size: 1rem;
-  height: 48px;
+  font-size: 0.95rem;
+  height: 42px;
   background-color: #888;
   color: white;
   border: none;
@@ -137,7 +139,6 @@ body {
   cursor: pointer;
   white-space: nowrap;
   text-align: center;
-   margin-top: -0.5px;
 }
 
 .input-with-button button:hover {
@@ -150,25 +151,15 @@ body {
   background-color: #ffecec;
   color: #d8000c;
   border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 0.95rem;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.form-container input[type="number"],
-.form-container input[type="email"],
-.form-container select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-sizing: border-box;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-  appearance: none; /* 기본 화살표 스타일 제거 (선택사항) */
-}
-
-.form-container select:focus {
-  border-color: #6c63ff;
-  outline: none;
+/* 반응형 보완 */
+@media (max-height: 600px) {
+  .form-container {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 }
