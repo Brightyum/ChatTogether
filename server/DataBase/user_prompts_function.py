@@ -9,7 +9,9 @@ class UserPrompt:
         self.db = Db().getDb()
 
     def savePrompt(self, user_id, title, category, content):
+
         prompt_text = f"[{category}] {title} - {content}"
+
         try:
             with self.db.cursor() as cursor:
 
@@ -53,8 +55,8 @@ class UserPrompt:
                 self.db.close()
             except:
                 pass
-    
-    #프롬프트 수정 메서드
+
+    # 프롬프트 수정 메서드
     def updatePrompt(self, user_id, original_title, new_title, category, content):
         try:
             with self.db.cursor() as cursor:
@@ -64,7 +66,17 @@ class UserPrompt:
                     WHERE Personal_ID = %s AND title = %s
                 """
                 prompt_text = f"[{category}] {new_title} - {content}"
-                cursor.execute(sql, (new_title, category, content, prompt_text, user_id, original_title))
+                cursor.execute(
+                    sql,
+                    (
+                        new_title,
+                        category,
+                        content,
+                        prompt_text,
+                        user_id,
+                        original_title,
+                    ),
+                )
                 self.db.commit()
                 return True
         except Exception as e:
@@ -72,7 +84,7 @@ class UserPrompt:
             self.db.rollback()
             return False
 
-    #프롬프트 삭제 메서드
+    # 프롬프트 삭제 메서드
     def deletePrompt(self, user_id, title):
         try:
             with self.db.cursor() as cursor:
@@ -84,8 +96,8 @@ class UserPrompt:
             print("프롬프트 삭제 오류:", e)
             self.db.rollback()
             return False
-    
-    #프롬프트 상세 정보를 읽어오는 메서드
+
+    # 프롬프트 상세 정보를 읽어오는 메서드
     def getPromptByTitle(self, user_id, title):
         try:
             with self.db.cursor() as cursor:
@@ -95,4 +107,3 @@ class UserPrompt:
         except Exception as e:
             print("프롬프트 조회 오류:", e)
             return None
-

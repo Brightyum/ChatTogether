@@ -13,6 +13,7 @@ from server.DataBase.user_qna_token import UserQnaToken
 from RAG.vectorstore import VectorStore
 from RAG.load import Load
 from RAG.split import Split
+from flask import session
 import os
 import tiktoken
 
@@ -55,22 +56,25 @@ class ChatSystem:
         return self.vectorstore_obj.similarity_search_with_score(query, k=k)
 
     def get_prompt(self, retrieved_docs=None):
-        user_prompt = UserPrompt()
-        prompt_list = user_prompt.getPrompt(self.user_id)
-
         messages = [
             ("system", "You are a helpful assistant that answers in Korean."),
             MessagesPlaceholder(variable_name="chat_history"),
         ]
 
-        if prompt_list:
-            for prompt in prompt_list:
-                messages.append(
-                    (
-                        "system",
-                        f"[{prompt['category']}] {prompt['title']} - {prompt['content']}",
-                    )
+        # 🔥 세션 프롬프트 우선 적용
+        selected_prompt = session.get("selected_prompt")
+        if selected_prompt:
+            messages.append(
+                (
+                    "system",
+                    f"[{selected_prompt['category']}] {selected_prompt['title']} - {selected_prompt['content']}",
                 )
+            )
+        else:
+            # 예외 처리: 세션에 없을 경우 기본 프롬프트 or DB (선택)
+            print(
+                "[INFO] 세션에 선택된 프롬프트 없음. 기본 시스템 프롬프트만 사용합니다."
+            )
 
         if retrieved_docs:
             context = ""
