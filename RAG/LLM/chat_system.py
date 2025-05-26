@@ -10,6 +10,8 @@ from langchain_community.vectorstores import FAISS
 from server.DataBase.user_prompts_function import UserPrompt
 from server.DataBase.user_qna_save import UserQnaSave
 from RAG.vectorstore import VectorStore
+from RAG.load import Load
+from RAG.split import Split
 import os
 
 MAX_MEMORY_LENGTH = 4
@@ -22,28 +24,29 @@ class ChatSystem:
         self.team_id = team_id
         self.memory = self.get_memory()
         self.session_summary = None
-        self.vectorstore = VectorStore()
 
-        index_path = os.path.join(
-            self.vectorstore.VECTORSTORE_PATH,
-            str(team_id) if team_id is not None else "",
-        )
-        index_file = os.path.join(index_path, "index.faiss")
-        pkl_file = os.path.join(index_path, "index.pkl")
+        if self.team_id is not None:
+            self.load = Load(team_id=team_id)
+            self.vectorstore = VectorStore()
+            index_path = os.path.join(self.vectorstore.VECTORSTORE_PATH, str(team_id))
+            index_file = os.path.join(index_path, "index.faiss")
+            pkl_file = os.path.join(index_path, "index.pkl")
 
-        if os.path.exists(index_file) and os.path.exists(pkl_file):
-            print(f"[INFO] FAISS 인덱스 로드 (team_id: {team_id})")
-            self.vectorstore_obj = self.vectorstore.load_vectorstore(
-                team_id=self.team_id
-            )
+            if os.path.exists(index_file) and os.path.exists(pkl_file):
+                print(f"[INFO] FAISS 인덱스 로드 (team_id: {team_id})")
+                self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
+            else:
+                print(f"[INFO] 인덱스 없음, JSON → 임베딩 진행 (team_id: {team_id})")
+                docs = self.load.get_json_to_documents()
+                if docs:
+                    self.vectorstore.embed_documents(docs, team_id)
+                else:
+                    print(
+                        f"[WARN] JSON 문서 없음, VectorStore 생성만 진행 (team_id: {team_id})"
+                    )
+                self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
         else:
-            print(
-                f"[INFO] 인덱스 파일이 없어 set_vectorstore() 실행 (team_id: {team_id})"
-            )
-            self.vectorstore.set_vectorstore(team_id=self.team_id)
-            self.vectorstore_obj = self.vectorstore.load_vectorstore(
-                team_id=self.team_id
-            )
+            print("[INFO] 개인 모드: RAG 사용하지 않고 기본 LLM만 응답")
 
     def search_vectorstore(self, query: str, k=3) -> list:
         return self.vectorstore_obj.similarity_search_with_score(query, k=k)
@@ -103,12 +106,26 @@ class ChatSystem:
             retrieved_docs = []
             if self.team_id is not None:
                 retrieved_docs = self.search_vectorstore(question)
-                if retrieved_docs:
-                    print(
-                        f"team_id: {self.team_id}, {len(retrieved_docs)}개 문서 검색됨"
-                    )
+
+            # VectorStore 검색 결과 있음
+            if retrieved_docs:
+                first = retrieved_docs[0]
+                if isinstance(first, tuple):
+                    top_doc, score = first
+                    response = top_doc.metadata.get("답변")
+                    if response:
+                        print(f"VectorStore 응답: {response} (score: {score})")
+                        yield response
+                        return  # ✅ 응답이 있으면 여기서 끝
+                    else:
+                        print(
+                            "[WARN] VectorStore 응답: 메타데이터 없음, LLM Chain으로 넘어갑니다."
+                        )
                 else:
-                    print("유사 문서가 없어 기본 프롬프트를 사용하겠습니다.")
+                    top_doc = first
+                    print(f"VectorStore 응답: {top_doc.page_content}")
+                    yield top_doc.page_content
+                    return
 
             chain = self.get_chain(retrieved_docs)
             response = chain.stream({"question": question})

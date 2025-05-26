@@ -90,7 +90,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/qa.js') }}"></script>
-  <a href="{{ url_for('export_qna_json') }}" class="nav-btn">QnA JSON 저장</a>
+  <a href="{{ url_for('export_qna_json', team_id=team_id) }}" class="nav-btn">QnA JSON 저장</a>
 
 </body>
 </html>
