@@ -29,34 +29,21 @@ class ChatSystem:
         self.session_summary = None
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
-        # 팀 아이디가 존재할때 실행
         if self.team_id is not None:
             self.load = Load(team_id=team_id)
             self.vectorstore = VectorStore()
-
-            # 팀 json파일 및 벡터스토어 필수 파일들 경로 설정
             index_path = os.path.join(self.vectorstore.VECTORSTORE_PATH, str(team_id))
             index_file = os.path.join(index_path, "index.faiss")
             pkl_file = os.path.join(index_path, "index.pkl")
 
-            # 필수 파일들의 경로가 존재하면 벡터스토어에 들어있는 값들을 읽어드림
             if os.path.exists(index_file) and os.path.exists(pkl_file):
                 print(f"[INFO] FAISS 인덱스 로드 (team_id: {team_id})")
                 self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
-            # 필수 파일들의 경로가 존재하지 않는다면 초기 대화 상태이며,
-            # JSON파일을 읽어들여 벡터스토어 생성후 파일 데이터를(임베딩 후) 저장
             else:
                 print(f"[INFO] 인덱스 없음, JSON → 임베딩 진행 (team_id: {team_id})")
                 docs = self.load.get_json_to_documents()
                 if docs:
                     self.vectorstore.embed_documents(docs, team_id)
-                else:
-                    print(
-                        f"[WARN] JSON 문서 없음, VectorStore 생성만 진행 (team_id: {team_id})"
-                    )
-
-                # 임베딩 시도 (docs 비어있어도 embed_documents가 내부에서 안전 처리)
-                self.vectorstore.embed_documents(docs, team_id)
                 self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
         else:
             print("[INFO] 개인 모드: RAG 사용하지 않고 기본 LLM만 응답")
@@ -64,16 +51,38 @@ class ChatSystem:
     def search_vectorstore(self, query: str, k=3) -> list:
         return self.vectorstore_obj.similarity_search_with_score(query, k=k)
 
-    def get_prompt(self, retrieved_docs=None):
-        # 기본 프롬프트
+    def summarize_documents(self, retrieved_docs) -> str:
+        """
+        retrieved_docs: [(Document, score), ...] 형태의 리스트
+        반환: 문서 요약 텍스트 (str)
+        """
+        doc_text = "\n\n".join(
+            [
+                f"문서 (score: {score:.4f}): {doc.page_content}"
+                for doc, score in retrieved_docs
+            ]
+        )
+
+        summary_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "다음 문서들의 내용을 요약해 주세요. 각 문서의 핵심 내용을 요약하며, 전체 내용을 사용자의 질문과 관련된 형태로 통합해 주세요.",
+                ),
+                ("human", doc_text),
+            ]
+        )
+
+        chain = summary_prompt | self.get_llm() | StrOutputParser()
+        summary = chain.invoke({})
+        return summary
+
+    def get_prompt(self, summarized_context=None):
         messages = [
             ("system", "You are a helpful assistant that answers in Korean."),
-            MessagesPlaceholder(
-                variable_name="chat_history"
-            ),  # 사용자의 이전 대화를 저장
+            MessagesPlaceholder(variable_name="chat_history"),
         ]
 
-        # 세션 프롬프트 우선 적용
         selected_prompt = session.get("selected_prompt")
         if selected_prompt:
             messages.append(
@@ -82,23 +91,15 @@ class ChatSystem:
                     f"[{selected_prompt['category']}] {selected_prompt['title']} - {selected_prompt['content']}",
                 )
             )
-        else:
-            # 예외 처리: 세션에 없을 경우 기본 프롬프트 or DB (선택)
-            print(
-                "[INFO] 세션에 선택된 프롬프트 없음. 기본 시스템 프롬프트만 사용합니다."
-            )
 
-        # 문서가 있을경우 문서도 프롬프트에 추가
-        if retrieved_docs:
-            context = ""
-            for doc, score in retrieved_docs:
-                context += f"문서 (score: {score:.4f}): {doc.page_content}\n\n"
+        if summarized_context:
             messages.append(
                 (
                     "system",
                     f"""
-    다음은 참고할 문서 목록입니다. 반드시 참고하여 답변을 작성하세요. 답변에는 문서의 핵심 내용을 포함하고, 사용자의 질문과 관련된 내용을 명확히 전달하세요:
-    {context}""",
+다음은 참고할 문서의 요약입니다. 반드시 이 내용을 답변으로 하여 질문에 답변하세요.
+{summarized_context}
+""",
                 )
             )
 
@@ -106,7 +107,7 @@ class ChatSystem:
         return ChatPromptTemplate.from_messages(messages)
 
     def get_llm(self):
-        return ChatOpenAI(model_name="gpt-4o", temperature=0.5)
+        return ChatOpenAI(model_name="gpt-4o", temperature=0)
 
     def get_memory(self):
         memory = ConversationBufferMemory(
@@ -121,16 +122,13 @@ class ChatSystem:
             | itemgetter("chat_history")
         )
 
-    def get_chain(self, retrieved_docs=None):
-        prompt = (
-            self.get_prompt(retrieved_docs) if retrieved_docs else self.get_prompt()
-        )
+    def get_chain(self, summarized_context=None):
+        prompt = self.get_prompt(summarized_context)
         return self.get_runnable() | prompt | self.get_llm()
 
     def calculate_total_tokens(
         self, prompt_template, chat_history, question, final_answer
     ):
-        # Prompt 텍스트 변환 및 토큰 계산
         prompt_text = ""
         if prompt_template:
             try:
@@ -142,34 +140,24 @@ class ChatSystem:
                 )
             except Exception as e:
                 print(f"[WARN] Prompt 변환 오류: {e}")
-        else:
-            prompt_text = ""
 
         prompt_tokens = len(self.tokenizer.encode(prompt_text)) if prompt_text else 0
-
-        # Chat History 토큰 계산
-        chat_history_text = ""
-        if chat_history:
-            chat_history_text = "\n".join(
-                [f"{msg.type}: {msg.content}" for msg in chat_history]
-            )
+        chat_history_text = (
+            "\n".join([f"{msg.type}: {msg.content}" for msg in chat_history])
+            if chat_history
+            else ""
+        )
         chat_history_tokens = (
             len(self.tokenizer.encode(chat_history_text)) if chat_history_text else 0
         )
-
-        # Question 토큰 계산
         question_tokens = len(self.tokenizer.encode(question)) if question else 0
-
-        # Final Answer 토큰 계산
         final_answer_tokens = (
             len(self.tokenizer.encode(final_answer)) if final_answer else 0
         )
 
-        # 총합
         total_tokens = (
             prompt_tokens + chat_history_tokens + question_tokens + final_answer_tokens
         )
-
         return {
             "prompt_tokens": prompt_tokens,
             "chat_history_tokens": chat_history_tokens,
@@ -181,112 +169,15 @@ class ChatSystem:
     def run(self, question: str):
         final_answer = ""
         try:
+            summarized_context = None
             retrieved_docs = []
+
             if self.team_id is not None:
-                # 사용자의 질문을 현재 저장된 벡터스토어에 대입
                 retrieved_docs = self.search_vectorstore(question)
+                if retrieved_docs:
+                    summarized_context = self.summarize_documents(retrieved_docs)
 
-            # 벡터스토어에 검색 결과 있음(검색 결과는 좋을수도 나쁠수도 있음)
-            if retrieved_docs:
-                # LLM에 벡터스토어에서 검색한 결과(질문과 가장 유사한 질문과 답변)을 넣음
-                chain = self.get_chain(retrieved_docs)
-
-                #  벡터스토어에서의 결과 응답은 LLM 참고자료로만 사용
-                response = chain.stream({"question": question})
-
-                # 응답에 대한 토큰계산
-                for token in response:
-                    print(token.content, end="", flush=True)
-                    final_answer += token.content
-                    yield token.content
-
-                # 현재 사용자의 컴퓨터 메모리에 질문, 응답을 저장
-                self.memory.save_context({"inputs": question}, {"output": final_answer})
-
-                # 토큰을 계산하여 사용자의 부과금 측정
-                token_info = self.calculate_total_tokens(
-                    prompt_template=self.get_prompt(retrieved_docs),
-                    chat_history=self.memory.chat_memory.messages,
-                    question=question,
-                    final_answer=final_answer,
-                )
-
-                self.save_to_token_db(
-                    user_id=self.user_id,
-                    question=question,
-                    answer=final_answer,
-                    prompt_tokens=token_info["prompt_tokens"],
-                    chat_history_tokens=token_info["chat_history_tokens"],
-                    question_tokens=token_info["question_tokens"],
-                    final_answer_tokens=token_info["final_answer_tokens"],
-                    total_token=token_info["total_tokens"],
-                )
-
-                print("\n[INFO] 토큰 사용량")
-                print("──────────────────────────────")
-                print(f"질문 (Q):    {token_info['question_tokens']} tokens")
-                print(f"답변 (A):   {token_info['final_answer_tokens']} tokens")
-                print(f"프롬프트:    {token_info['prompt_tokens']} tokens")
-                print(f"대화 기록:  {token_info['chat_history_tokens']} tokens")
-                print("──────────────────────────────")
-                print(f"총합:       {token_info['total_tokens']} tokens")
-                print("──────────────────────────────")
-
-                # 🔹 데이터 출력: 실제 질문, 답변, 프롬프트, 대화 기록
-                print("\n[INFO] 실제 데이터 확인")
-                print("──────────────────────────────")
-                print(f"질문 (Q): {question}")
-
-                print("──────────────────────────────")
-                print(f"답변 (A):\n{final_answer}")
-
-                print("──────────────────────────────")
-                # 프롬프트 출력
-                try:
-                    prompt_messages = self.get_prompt(retrieved_docs).format_messages(
-                        question=question,
-                        chat_history=self.memory.chat_memory.messages,
-                    )
-                    prompt_text = "\n".join(
-                        [f"{msg.type}: {msg.content}" for msg in prompt_messages]
-                    )
-                    print(f"프롬프트:\n{prompt_text}")
-                except Exception as e:
-                    print(f"[WARN] 프롬프트 출력 중 오류: {e}")
-
-                print("──────────────────────────────")
-                # 대화 기록 출력
-                if self.memory.chat_memory.messages:
-                    chat_history_text = "\n".join(
-                        [
-                            f"{msg.type}: {msg.content}"
-                            for msg in self.memory.chat_memory.messages
-                        ]
-                    )
-                    print(f"대화 기록:\n{chat_history_text}")
-                else:
-                    print("대화 기록: (없음)")
-
-                print("──────────────────────────────")
-                if self.session_summary is None:
-                    self.session_summary = self.summarize_messages(
-                        self.memory.chat_memory.messages
-                    )
-
-                self.save_to_db(
-                    self.user_id, question, final_answer, self.session_summary
-                )
-                if self.team_id is not None:
-                    self.save_team_qna_to_db(
-                        self.user_id,
-                        self.team_id,
-                        question,
-                        final_answer,
-                        self.session_summary,
-                    )
-                return  # ✅ 이제는 yield response 대신 LLM이 생성한 답변이 출력됩니다
-
-            chain = self.get_chain(retrieved_docs)
+            chain = self.get_chain(summarized_context)
             response = chain.stream({"question": question})
 
             for token in response:
@@ -296,9 +187,25 @@ class ChatSystem:
 
             self.memory.save_context({"inputs": question}, {"output": final_answer})
 
-            # 🔥 토큰 계산
+            # 🔥 검색된 문서와 score 출력
+            if retrieved_docs:
+                print("\n\n🔍 [참고한 문서 목록]")
+                for idx, (doc, score) in enumerate(retrieved_docs, 1):
+                    print(
+                        f"{idx}. (score: {score:.4f}) {doc.page_content[:100]}..."
+                    )  # 문서 일부만 출력
+
+                # 문서 정보도 yield로 전달
+                doc_info = "\n".join(
+                    [
+                        f"{idx}. (score: {score:.4f}) {doc.page_content[:100]}..."
+                        for idx, (doc, score) in enumerate(retrieved_docs, 1)
+                    ]
+                )
+                yield f"\n\n🔍 [참고한 문서 목록]\n{doc_info}"
+
             token_info = self.calculate_total_tokens(
-                prompt_template=self.get_prompt(retrieved_docs),
+                prompt_template=self.get_prompt(summarized_context),
                 chat_history=self.memory.chat_memory.messages,
                 question=question,
                 final_answer=final_answer,
@@ -315,68 +222,22 @@ class ChatSystem:
                 total_token=token_info["total_tokens"],
             )
 
-            print("\n[INFO] 토큰 사용량")
-            print("──────────────────────────────")
-            print(f"질문 (Q):    {token_info['question_tokens']} tokens")
-            print(f"답변 (A):   {token_info['final_answer_tokens']} tokens")
-            print(f"프롬프트:    {token_info['prompt_tokens']} tokens")
-            print(f"대화 기록:  {token_info['chat_history_tokens']} tokens")
-            print("──────────────────────────────")
-            print(f"총합:       {token_info['total_tokens']} tokens")
-            print("──────────────────────────────")
-
-            if self.session_summary is not None:
-                self.save_to_db(
-                    self.user_id, question, final_answer, self.session_summary
+            if self.session_summary is None:
+                self.session_summary = self.summarize_messages(
+                    self.memory.chat_memory.messages
                 )
-                if self.team_id is not None:
-                    self.save_team_qna_to_db(
-                        self.user_id,
-                        self.team_id,
-                        question,
-                        final_answer,
-                        self.session_summary,
-                    )
+
+            self.save_to_db(self.user_id, question, final_answer, self.session_summary)
+            if self.team_id is not None:
+                self.save_team_qna_to_db(
+                    self.user_id,
+                    self.team_id,
+                    question,
+                    final_answer,
+                    self.session_summary,
+                )
 
             self.check_memory_limit()
-
-            # # 🔹 데이터 출력: 실제 질문, 답변, 프롬프트, 대화 기록
-            # print("\n[INFO] 실제 데이터 확인")
-            # print("──────────────────────────────")
-            # print(f"질문 (Q): {question}")
-
-            # print("──────────────────────────────")
-            # print(f"답변 (A):\n{final_answer}")
-
-            # print("──────────────────────────────")
-            # # 프롬프트 출력
-            # try:
-            #     prompt_messages = self.get_prompt(retrieved_docs).format_messages(
-            #         question=question, chat_history=self.memory.chat_memory.messages
-            #     )
-            #     prompt_text = "\n".join(
-            #         [f"{msg.type}: {msg.content}" for msg in prompt_messages]
-            #     )
-            #     print(f"프롬프트:\n{prompt_text}")
-            # except Exception as e:
-            #     print(f"[WARN] 프롬프트 출력 중 오류: {e}")
-
-            # print("──────────────────────────────")
-            # # 대화 기록 출력
-            # if self.memory.chat_memory.messages:
-            #     chat_history_text = "\n".join(
-            #         [
-            #             f"{msg.type}: {msg.content}"
-            #             for msg in self.memory.chat_memory.messages
-            #         ]
-            #     )
-            #     print(f"대화 기록:\n{chat_history_text}")
-            # else:
-            #     print("대화 기록: (없음)")
-
-            # print("──────────────────────────────")
-
-            return final_answer
 
         except Exception as e:
             yield f"\n[에러 발생]: {str(e)}"
