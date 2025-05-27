@@ -361,24 +361,29 @@ def qa_page_teams():
 # 팀원 초대 페이지
 @app.route("/invite_member", methods=["GET", "POST"])
 def invite_member():
+    # 세션에 저장되어있는 사용자 아이디값을 저장
+    user_id = session["user_id"]
+
+    # 세션에 사용자 아이디가 없으면 로그인 창으로 반환
     if "user_id" not in session:
         flash("로그인이 필요합니다.")
         return redirect(url_for("login"))
 
-    user_id = session["user_id"]
+    # 사용자 아이디를 기반으로 내가 만든 팀 목록만 불러오기
     team_creator = TeamCreator()
     team_list = team_creator.get_my_created_teams(
         user_id
-    )  # 내가 만든 팀 목록만 불러오기
+    )  
 
     if request.method == "POST":
         team_id = request.form["team"]
         invited_user_id = request.form["user_id"]  # 이메일 대신 사용자 ID 입력 받기
-        role = request.form["role"]
+        role = request.form["role"] # 팀원들의 역할을 지정 가능
 
         # 초대처리
         team_invite = TeamInvite()
 
+        # 데이터베이스에서 사용자 아이디를 기반으로 팀 초대
         success = team_invite.invite_member(team_id, invited_user_id, role)
 
         if success:
@@ -562,9 +567,9 @@ def select_prompt():
         return jsonify({"success": False, "message": "로그인이 필요합니다."}), 401
 
     data = request.get_json()
-    title = data.get("title")
-    category = data.get("category")
-    content = data.get("content")
+    title = data.get("title") # 프롬프트 제목
+    category = data.get("category") # 프롬프트 카테고리
+    content = data.get("content") # 프롬프트 내용
 
     # 로그 확인용 - ChatSystem 연동 전
     print(f"프롬프트 선택됨: title={title}, category={category}, content={content}")
@@ -587,7 +592,7 @@ def edit_prompt():
 
     user_id = session["user_id"]
     prompt_db = UserPrompt()
-
+    
     if request.method == "POST":
         original_title = request.form["original_title"]
         new_title = request.form["title"]

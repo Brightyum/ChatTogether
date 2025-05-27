@@ -15,26 +15,33 @@ class Load:
         self.JSON_PATH = f"json/team_qna_{team_id}.json"
         self.ensure_json_file_exists()
 
+    # 초기 팀 생성하여 JSON 파일이 없을 시 사용
     def ensure_json_file_exists(self):
+        # 초기 팀 생성 날짜를 저장
         today = datetime.now().strftime("%Y-%m-%d")
         team_id = self.JSON_PATH.split("_")[-1].split(".")[0]  # 파일명에서 team_id 추출
 
+        # 초기 JSON파일 필수 데이터
         basic_data = {
             "1": {
                 "질문자ID": "system",
                 "팀ID": team_id,
                 "대화주제": "팀 협업",
-                "질문": "팀 협업 시스템이란 무엇인가요?",
+                "질문": "당신은 팀 협업 시스템으로써, 팀원들의 협업 도울 수 있어야 한다.",
                 "날짜": today,
-                "응답": "팀 협업 시스템은 여러 명이 함께 정보를 공유하고, 작업을 분담하여 효율적으로 프로젝트를 수행하는 시스템입니다.",
+                "응답": """
+                        네, 팀 협업 시스템으로써 여러 명이 함께 정보를 공유하고, 
+                        작업을 분담하여 효율적으로 프로젝트를 수행하겠습니다.
+                """,
             }
         }
-        """파일이 없으면 빈 JSON 파일 생성"""
+        # JSON 파일이 없을때 JSON 파일 생성
         if not os.path.exists(self.JSON_PATH):
             with open(self.JSON_PATH, "w", encoding="utf-8") as f:
                 json.dump(basic_data, f, ensure_ascii=False, indent=2)
             print(f"[INFO] {self.JSON_PATH} 생성 완료 (JSON 파일)")
 
+    # JSON파일을 읽어들여 JSON파일 내부의 데이터 반환
     def load_json_file(self) -> dict:
         try:
             with open(self.JSON_PATH, "r", encoding="utf-8") as file:

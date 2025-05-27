@@ -29,17 +29,22 @@ class ChatSystem:
         self.session_summary = None
         self.tokenizer = tiktoken.get_encoding("cl100k_base")
 
+        # 팀 아이디가 존재할때 실행
         if self.team_id is not None:
             self.load = Load(team_id=team_id)
             self.vectorstore = VectorStore()
 
+            # 팀 json파일 및 벡터스토어 필수 파일들 경로 설정
             index_path = os.path.join(self.vectorstore.VECTORSTORE_PATH, str(team_id))
             index_file = os.path.join(index_path, "index.faiss")
             pkl_file = os.path.join(index_path, "index.pkl")
 
+            # 필수 파일들의 경로가 존재하면 벡터스토어에 들어있는 값들을 읽어드림
             if os.path.exists(index_file) and os.path.exists(pkl_file):
                 print(f"[INFO] FAISS 인덱스 로드 (team_id: {team_id})")
                 self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
+            # 필수 파일들의 경로가 존재하지 않는다면 초기 대화 상태이며,
+            # JSON파일을 읽어들여 벡터스토어 생성후 파일 데이터를(임베딩 후) 저장
             else:
                 print(f"[INFO] 인덱스 없음, JSON → 임베딩 진행 (team_id: {team_id})")
                 docs = self.load.get_json_to_documents()
@@ -49,12 +54,7 @@ class ChatSystem:
                     print(
                         f"[WARN] JSON 문서 없음, VectorStore 생성만 진행 (team_id: {team_id})"
                     )
-                    # docs = [
-                    #     Document(
-                    #         page_content="초기 질문",
-                    #         metadata={"답변": "초기 답변", "팀ID": team_id},
-                    #     )
-                    # ]
+
                 # 임베딩 시도 (docs 비어있어도 embed_documents가 내부에서 안전 처리)
                 self.vectorstore.embed_documents(docs, team_id)
                 self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
@@ -65,12 +65,15 @@ class ChatSystem:
         return self.vectorstore_obj.similarity_search_with_score(query, k=k)
 
     def get_prompt(self, retrieved_docs=None):
+        # 기본 프롬프트
         messages = [
             ("system", "You are a helpful assistant that answers in Korean."),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(
+                variable_name="chat_history"
+            ),  # 사용자의 이전 대화를 저장
         ]
 
-        # 🔥 세션 프롬프트 우선 적용
+        # 세션 프롬프트 우선 적용
         selected_prompt = session.get("selected_prompt")
         if selected_prompt:
             messages.append(
@@ -85,11 +88,19 @@ class ChatSystem:
                 "[INFO] 세션에 선택된 프롬프트 없음. 기본 시스템 프롬프트만 사용합니다."
             )
 
+        # 문서가 있을경우 문서도 프롬프트에 추가
         if retrieved_docs:
             context = ""
             for doc, score in retrieved_docs:
                 context += f"문서 (score: {score:.4f}): {doc.page_content}\n\n"
-            messages.append(("system", f"다음은 참고할 문서입니다:\n{context}"))
+            messages.append(
+                (
+                    "system",
+                    f"""
+    다음은 참고할 문서 목록입니다. 반드시 참고하여 답변을 작성하세요. 답변에는 문서의 핵심 내용을 포함하고, 사용자의 질문과 관련된 내용을 명확히 전달하세요:
+    {context}""",
+                )
+            )
 
         messages.append(("human", "#Question: {question}"))
         return ChatPromptTemplate.from_messages(messages)
@@ -172,23 +183,27 @@ class ChatSystem:
         try:
             retrieved_docs = []
             if self.team_id is not None:
+                # 사용자의 질문을 현재 저장된 벡터스토어에 대입
                 retrieved_docs = self.search_vectorstore(question)
 
-            # VectorStore 검색 결과 있음
+            # 벡터스토어에 검색 결과 있음(검색 결과는 좋을수도 나쁠수도 있음)
             if retrieved_docs:
+                # LLM에 벡터스토어에서 검색한 결과(질문과 가장 유사한 질문과 답변)을 넣음
                 chain = self.get_chain(retrieved_docs)
 
-                # 🔥 VectorStore 응답은 LLM 참고자료로만 사용
+                #  벡터스토어에서의 결과 응답은 LLM 참고자료로만 사용
                 response = chain.stream({"question": question})
 
+                # 응답에 대한 토큰계산
                 for token in response:
                     print(token.content, end="", flush=True)
                     final_answer += token.content
                     yield token.content
 
+                # 현재 사용자의 컴퓨터 메모리에 질문, 응답을 저장
                 self.memory.save_context({"inputs": question}, {"output": final_answer})
 
-                # 🔥 토큰 계산
+                # 토큰을 계산하여 사용자의 부과금 측정
                 token_info = self.calculate_total_tokens(
                     prompt_template=self.get_prompt(retrieved_docs),
                     chat_history=self.memory.chat_memory.messages,
