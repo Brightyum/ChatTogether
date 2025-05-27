@@ -22,7 +22,7 @@ class Db:
             user=self.db_user,  # 데이터베이스 사용자 이름
             password=self.db_pwd,  # 데이터베이스 사용자 비밀번호
             db="test",  # 데이터베이스 테이블 이름
-            charset="utf8",  # 한국어 안깨지도록 설정
+            charset="utf8mb4",  # 한국어 안깨지도록 설정
         )
 
     def getDb(self):

@@ -2,6 +2,7 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
+
 class TeamInvite:
     def __init__(self):
         load_dotenv()
@@ -18,7 +19,7 @@ class TeamInvite:
             password=self.db_pwd,
             db="test",
             charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor
+            cursorclass=pymysql.cursors.DictCursor,
         )
 
     def invite_member(self, team_id, user_id, role):
@@ -32,20 +33,28 @@ class TeamInvite:
 
             if not team:
                 # 아직 팀 멤버 정보가 없으면 새로 생성 (최초 팀 생성자만 등록되어 있는 경우)
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO Team_Table (Team_ID, ClientID_fir, ClientType_fir)
                     VALUES (%s, %s, %s)
-                """, (team_id, user_id, role))
+                """,
+                    (team_id, user_id, role),
+                )
             else:
                 # 비어있는 슬롯 찾기
                 added = False
+
+                # 스트링 포멧을 사용하여 입력 값을 추가
                 for i in ["fir", "sec", "thr", "fou", "fiv", "six"]:
                     if not team[f"ClientID_{i}"]:
-                        cursor.execute(f"""
+                        cursor.execute(
+                            f"""
                             UPDATE Team_Table
                             SET ClientID_{i} = %s, ClientType_{i} = %s
                             WHERE Team_ID = %s
-                        """, (user_id, role, team_id))
+                        """,
+                            (user_id, role, team_id),
+                        )
                         added = True
                         break
 
@@ -87,7 +96,17 @@ class TeamInvite:
                 AND c.Team_Name IS NOT NULL
                 AND c.Team_Name != ''
             """
-            params = (user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id, user_id)
+            params = (
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+                user_id,
+            )
             cursor.execute(sql, params)
             results = cursor.fetchall()
             cursor.close()
@@ -97,17 +116,20 @@ class TeamInvite:
             print("❌ 사용자별 팀 목록 조회 오류:", e)
             return []
 
-#팀 나가기기
+    # 팀 나가기기
     def leave_team(self, user_id, team_id):
         try:
             conn = self.connect_db()
             cursor = conn.cursor()
             for i in ["fir", "sec", "thr", "fou", "fiv", "six"]:
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     UPDATE Team_Table
                     SET ClientID_{i} = NULL, ClientType_{i} = NULL
                     WHERE Team_ID = %s AND ClientID_{i} = %s
-                """, (team_id, user_id))
+                """,
+                    (team_id, user_id),
+                )
             conn.commit()
             cursor.close()
             conn.close()
@@ -116,7 +138,7 @@ class TeamInvite:
             print("❌ 팀 나가기 오류:", e)
             return False
 
-    #팀원 목록 가져오기
+    # 팀원 목록 가져오기
     def get_team_members(self, team_id):
         try:
             conn = self.connect_db()
