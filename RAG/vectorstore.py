@@ -46,6 +46,9 @@ class VectorStore:
         print(f"[INFO] VectorStore 저장 완료: {path}")
 
     def embed_documents(self, docs, team_id):
+        if not docs:
+            print(f"[WARN] 임베딩할 문서가 없습니다. (team_id: {team_id})")
+            return
         try:
             vectorstore = self.load_vectorstore(team_id)
         except FileNotFoundError:

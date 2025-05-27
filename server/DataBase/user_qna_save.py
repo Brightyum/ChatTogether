@@ -29,6 +29,9 @@ class UserQnaSave:
                 cursor.execute(sql, (user_id, summary, question, answer))
             self.db.commit()
         except Exception as e:
+            print(
+                f"user_id: {user_id}\nquestion: {question}\nfinal_answer:{answer}\nsummary: {summary}"
+            )
             print("[단일 QnA 저장 오류]", e)
             self.db.rollback()
 
@@ -40,12 +43,12 @@ class UserQnaSave:
                         user_msg = messages[i].content
                     else:
                         user_msg = ""
-                    
+
                     if messages[i + 1].type == "ai":
                         ai_msg = messages[i + 1].content
                     else:
                         ai_msg = ""
-                    
+
                     sql = """
                         INSERT INTO TeamQna_Table (Team_ID, Client_ID, conversation_id, Team_Asw, Team_Rsp)
                         VALUES (%s, %s, %s, %s, %s)
@@ -64,12 +67,12 @@ class UserQnaSave:
                         user_msg = messages[i].content
                     else:
                         user_msg = ""
-                    
+
                     if messages[i + 1].type == "ai":
                         ai_msg = messages[i + 1].content
                     else:
                         ai_msg = ""
-                    
+
                     sql = """
                         INSERT INTO Personal_Table (Client_ID, conversation_id, Personal_Asw, Personal_Rsp)
                         VALUES (%s, %s, %s, %s)

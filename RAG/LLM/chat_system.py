@@ -32,6 +32,7 @@ class ChatSystem:
         if self.team_id is not None:
             self.load = Load(team_id=team_id)
             self.vectorstore = VectorStore()
+
             index_path = os.path.join(self.vectorstore.VECTORSTORE_PATH, str(team_id))
             index_file = os.path.join(index_path, "index.faiss")
             pkl_file = os.path.join(index_path, "index.pkl")
@@ -48,6 +49,14 @@ class ChatSystem:
                     print(
                         f"[WARN] JSON 문서 없음, VectorStore 생성만 진행 (team_id: {team_id})"
                     )
+                    # docs = [
+                    #     Document(
+                    #         page_content="초기 질문",
+                    #         metadata={"답변": "초기 답변", "팀ID": team_id},
+                    #     )
+                    # ]
+                # 임베딩 시도 (docs 비어있어도 embed_documents가 내부에서 안전 처리)
+                self.vectorstore.embed_documents(docs, team_id)
                 self.vectorstore_obj = self.vectorstore.load_vectorstore(team_id)
         else:
             print("[INFO] 개인 모드: RAG 사용하지 않고 기본 LLM만 응답")
@@ -167,95 +176,100 @@ class ChatSystem:
 
             # VectorStore 검색 결과 있음
             if retrieved_docs:
-                first = retrieved_docs[0]
-                if isinstance(first, tuple):
-                    top_doc, score = first
-                    response = top_doc.metadata.get("답변")
-                    if response:
-                        print(f"VectorStore 응답: {response} (score: {score})")
-                        final_answer = response
-                        # 🔥 토큰 계산
-                        token_info = self.calculate_total_tokens(
-                            prompt_template=self.get_prompt(retrieved_docs),
-                            chat_history=self.memory.chat_memory.messages,
-                            question=question,
-                            final_answer=final_answer,
-                        )
+                chain = self.get_chain(retrieved_docs)
 
-                        self.save_to_token_db(
-                            user_id=self.user_id,
-                            question=question,
-                            answer=final_answer,
-                            prompt_tokens=token_info["prompt_tokens"],
-                            chat_history_tokens=token_info["chat_history_tokens"],
-                            question_tokens=token_info["question_tokens"],
-                            final_answer_tokens=token_info["final_answer_tokens"],
-                            total_token=token_info["total_tokens"],
-                        )
+                # 🔥 VectorStore 응답은 LLM 참고자료로만 사용
+                response = chain.stream({"question": question})
 
-                        print("\n[INFO] 토큰 사용량")
-                        print("──────────────────────────────")
-                        print(f"질문 (Q):    {token_info['question_tokens']} tokens")
-                        print(f"답변 (A):   {token_info['final_answer_tokens']} tokens")
-                        print(f"프롬프트:    {token_info['prompt_tokens']} tokens")
-                        print(f"대화 기록:  {token_info['chat_history_tokens']} tokens")
-                        print("──────────────────────────────")
-                        print(f"총합:       {token_info['total_tokens']} tokens")
-                        print("──────────────────────────────")
+                for token in response:
+                    print(token.content, end="", flush=True)
+                    final_answer += token.content
+                    yield token.content
 
-                        # 🔹 데이터 출력: 실제 질문, 답변, 프롬프트, 대화 기록
-                        print("\n[INFO] 실제 데이터 확인")
-                        print("──────────────────────────────")
-                        print(f"질문 (Q): {question}")
+                self.memory.save_context({"inputs": question}, {"output": final_answer})
 
-                        print("──────────────────────────────")
-                        print(f"답변 (A):\n{final_answer}")
+                # 🔥 토큰 계산
+                token_info = self.calculate_total_tokens(
+                    prompt_template=self.get_prompt(retrieved_docs),
+                    chat_history=self.memory.chat_memory.messages,
+                    question=question,
+                    final_answer=final_answer,
+                )
 
-                        print("──────────────────────────────")
-                        # 프롬프트 출력
-                        try:
-                            prompt_messages = self.get_prompt(
-                                retrieved_docs
-                            ).format_messages(
-                                question=question,
-                                chat_history=self.memory.chat_memory.messages,
-                            )
-                            prompt_text = "\n".join(
-                                [
-                                    f"{msg.type}: {msg.content}"
-                                    for msg in prompt_messages
-                                ]
-                            )
-                            print(f"프롬프트:\n{prompt_text}")
-                        except Exception as e:
-                            print(f"[WARN] 프롬프트 출력 중 오류: {e}")
+                self.save_to_token_db(
+                    user_id=self.user_id,
+                    question=question,
+                    answer=final_answer,
+                    prompt_tokens=token_info["prompt_tokens"],
+                    chat_history_tokens=token_info["chat_history_tokens"],
+                    question_tokens=token_info["question_tokens"],
+                    final_answer_tokens=token_info["final_answer_tokens"],
+                    total_token=token_info["total_tokens"],
+                )
 
-                        print("──────────────────────────────")
-                        # 대화 기록 출력
-                        if self.memory.chat_memory.messages:
-                            chat_history_text = "\n".join(
-                                [
-                                    f"{msg.type}: {msg.content}"
-                                    for msg in self.memory.chat_memory.messages
-                                ]
-                            )
-                            print(f"대화 기록:\n{chat_history_text}")
-                        else:
-                            print("대화 기록: (없음)")
+                print("\n[INFO] 토큰 사용량")
+                print("──────────────────────────────")
+                print(f"질문 (Q):    {token_info['question_tokens']} tokens")
+                print(f"답변 (A):   {token_info['final_answer_tokens']} tokens")
+                print(f"프롬프트:    {token_info['prompt_tokens']} tokens")
+                print(f"대화 기록:  {token_info['chat_history_tokens']} tokens")
+                print("──────────────────────────────")
+                print(f"총합:       {token_info['total_tokens']} tokens")
+                print("──────────────────────────────")
 
-                        print("──────────────────────────────")
+                # 🔹 데이터 출력: 실제 질문, 답변, 프롬프트, 대화 기록
+                print("\n[INFO] 실제 데이터 확인")
+                print("──────────────────────────────")
+                print(f"질문 (Q): {question}")
 
-                        yield response
-                        return  # ✅ 응답이 있으면 여기서 끝
-                    else:
-                        print(
-                            "[WARN] VectorStore 응답: 메타데이터 없음, LLM Chain으로 넘어갑니다."
-                        )
+                print("──────────────────────────────")
+                print(f"답변 (A):\n{final_answer}")
+
+                print("──────────────────────────────")
+                # 프롬프트 출력
+                try:
+                    prompt_messages = self.get_prompt(retrieved_docs).format_messages(
+                        question=question,
+                        chat_history=self.memory.chat_memory.messages,
+                    )
+                    prompt_text = "\n".join(
+                        [f"{msg.type}: {msg.content}" for msg in prompt_messages]
+                    )
+                    print(f"프롬프트:\n{prompt_text}")
+                except Exception as e:
+                    print(f"[WARN] 프롬프트 출력 중 오류: {e}")
+
+                print("──────────────────────────────")
+                # 대화 기록 출력
+                if self.memory.chat_memory.messages:
+                    chat_history_text = "\n".join(
+                        [
+                            f"{msg.type}: {msg.content}"
+                            for msg in self.memory.chat_memory.messages
+                        ]
+                    )
+                    print(f"대화 기록:\n{chat_history_text}")
                 else:
-                    top_doc = first
-                    print(f"VectorStore 응답: {top_doc.page_content}")
-                    yield top_doc.page_content
-                    return
+                    print("대화 기록: (없음)")
+
+                print("──────────────────────────────")
+                if self.session_summary is None:
+                    self.session_summary = self.summarize_messages(
+                        self.memory.chat_memory.messages
+                    )
+
+                self.save_to_db(
+                    self.user_id, question, final_answer, self.session_summary
+                )
+                if self.team_id is not None:
+                    self.save_team_qna_to_db(
+                        self.user_id,
+                        self.team_id,
+                        question,
+                        final_answer,
+                        self.session_summary,
+                    )
+                return  # ✅ 이제는 yield response 대신 LLM이 생성한 답변이 출력됩니다
 
             chain = self.get_chain(retrieved_docs)
             response = chain.stream({"question": question})
@@ -430,8 +444,12 @@ class ChatSystem:
         )
 
     def save_to_db(self, user_id, question, final_answer, session_summary):
+        print("저장을 시도하겠습니다.")
         self.get_db().save_chat_messages(
             user_id, question, final_answer, session_summary
+        )
+        print(
+            f"user_id: {user_id}, question: {question}, final_answer: {final_answer}, summary: {session_summary}"
         )
 
     def save_to_token_db(
