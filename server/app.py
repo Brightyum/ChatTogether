@@ -29,6 +29,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from RAG.LLM.chat_system import ChatSystem
 from RAG.load import Load
 
+
+if "SSL_CERT_FILE" in os.environ:
+    print("[INFO] 잘못된 SSL_CERT_FILE 제거:", os.environ["SSL_CERT_FILE"])
+    del os.environ["SSL_CERT_FILE"]
+
+
 app = Flask(__name__)
 
 # 챗시스템 객체 생성
